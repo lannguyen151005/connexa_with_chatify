@@ -231,3 +231,137 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
 | `403 Forbidden` | `FORBIDDEN` | Không có quyền sửa/xóa tài nguyên này | `{"success": false, "message": "...", "data": null}` |
 | `404 Not Found` | `NOT_FOUND` | Bài viết không tồn tại hoặc đã xóa mềm | `{"success": false, "message": "...", "data": null}` |
 | `500 Internal Error` | `SERVER_ERROR` | Lỗi phát sinh ngoài dự kiến từ hệ thống | `{"success": false, "message": "...", "data": null}` |
+
+## 6. Danh mục Endpoint Module Tương tác Bài viết (Post Interaction Endpoints)
+
+| Phương thức | Endpoint | Quyền hạn | Mô tả |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/posts/{postId}/reactions` | User | Thả / Đổi / Hủy biểu cảm (Reaction) bài viết |
+| `POST` | `/api/v1/posts/{postId}/comments` | User | Tạo bình luận mới (hoặc trả lời bình luận) |
+| `GET` | `/api/v1/posts/{postId}/comments` | Public / User | Lấy danh sách bình luận của bài viết (Phân trang) |
+| `DELETE` | `/api/v1/posts/comments/{commentId}` | Author / Post Owner | Xóa mềm bình luận (`is_deleted = true`) |
+
+---
+
+## 7. Chi tiết API Tương tác Bài viết (Interaction Endpoint Specifications)
+
+### 7.1. Tương tác biểu cảm bài viết (Toggle Post Reaction)
+- **Endpoint**: `POST /api/v1/posts/{postId}/reactions`
+- **Headers**: `Authorization: Bearer <token>`
+- **Path Variable**: `postId` (UUID) - ID của bài viết cần tương tác.
+- **Validation Rules**:
+  - `type`: `@NotNull`, nhận các giá trị enum: `LIKE`, `LOVE`, `HAHA`, `WOW`, `SAD`, `ANGRY`.
+- **Request Body (`ReactionRequestDTO`)**:
+  ```json
+  {
+    "type": "LIKE"
+  }
+  ```
+
+- **Response Success (200 OK)**:
+  ```json
+  {
+  "success": true,
+  "message": "Thực hiện tương tác thành công",
+  "data": null
+  }
+  ```
+
+### 7.2. Tạo bình luận mới (Create Comment)
+- **Endpoint**: `POST /api/v1/posts/{postId}/comments`
+- **Headers**: `Authorization: Bearer <token>`
+- **Path Variable**: `postId` (UUID) - ID của bài viết cần tương tác.
+- **Validation Rules**:
+  - `content`: `@NotBlank`, content: @NotBlank, tối đa 1000 ký tự.
+  - `parent_id`:  UUID (Tùy chọn). Bắt buộc phải tồn tại trong bảng post_comments nếu truyền.
+- **Request Body (`ReactionRequestDTO`)**:
+  ```json
+   {
+  "content": "v",
+  "parentId": "54E3Dc8B-D6f4-E5b0-495f-7CaB0A76Ddad"
+  }
+  ```
+  
+  ```json
+  {
+    "content": "v"
+  }
+  ```
+  
+- **Response Success (200 OK)**:
+  ```json
+  {
+  "success": true,
+  "message": "Bình luận thành công",
+  "data": {
+    "id": "d85a0fc8-bc87-4db1-a0e3-eb401cc724af",
+    "postId": "d67dae84-5082-4309-9bd4-f4ffba493650",
+    "authorId": "3361f90e-4063-4e21-8b49-cafc660f2d3c",
+    "authorUsername": "string",
+    "authorAvatarUrl": null,
+    "content": "v",
+    "parentId": null,
+    "createdAt": "2026-09-26T21:14:24.9758098"
+  }
+  }
+  ```
+
+### 7.3. Lấy danh sách bình luận (Get Post Comments)
+- **Endpoint**: `GET /api/v1/posts/{postId}/comments`
+- **Headers**: `Authorization: Bearer <token>`
+- **Path Variable**: `postId` (UUID) - ID của bài viết cần tương tác.
+- **Validation Rules**:
+  - `page (int, default 0)`: Số trang cần lấy.
+
+  - `size (int, default 10, max 50)`: Số bình luận trên một trang.
+
+- **Response Success (200 OK)**:
+  ```json
+  {
+  "success": true,
+  "message": "Lấy danh sách bình luận thành công",
+  "data": {
+  "items": [
+  {
+  "id": "d85a0fc8-bc87-4db1-a0e3-eb401cc724af",
+  "postId": "d67dae84-5082-4309-9bd4-f4ffba493650",
+  "authorId": "3361f90e-4063-4e21-8b49-cafc660f2d3c",
+  "authorUsername": "string",
+  "authorAvatarUrl": null,
+  "content": "v",
+  "parentId": null,
+  "createdAt": "2026-09-26T21:14:24.97581"
+  },
+  {
+  "id": "beedf170-7b31-4b4b-b398-263af9a34184",
+  "postId": "d67dae84-5082-4309-9bd4-f4ffba493650",
+  "authorId": "3361f90e-4063-4e21-8b49-cafc660f2d3c",
+  "authorUsername": "string",
+  "authorAvatarUrl": null,
+  "content": "v",
+  "parentId": null,
+  "createdAt": "2026-09-26T21:14:22.922791"
+  }
+  ],
+  "page": 0,
+  "size": 10,
+  "total_elements": 2,
+  "total_pages": 1,
+  "is_last": true
+  }
+  }
+  ```
+
+### 7.4. Xóa bình luận (Delete Comment - Soft Delete)
+- **Endpoint**: `DELETE /api/v1/posts/comments/{commentId}`
+- **Headers**: `Authorization: Bearer <token>`
+- **Path Variable**: `commentId` (UUID) - ID của binh luan cần tương tác.
+- **Ràng buộc**: Chỉ tác giả của bình luận hoặc chủ sở hữu bài viết mới có quyền xóa. Nếu không thỏa mãn trả về 403 Forbidden.
+- **Response Success (200 OK)**:
+  ```json
+  {
+  "success": true,
+  "message": "Đã xóa bình luận thành công",
+  "data": null
+  }
+  ```
