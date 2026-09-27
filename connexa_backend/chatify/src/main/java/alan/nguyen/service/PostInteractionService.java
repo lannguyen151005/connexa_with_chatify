@@ -4,6 +4,7 @@ import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.dto.interaction.CommentResponseDTO;
 import alan.nguyen.dto.interaction.CreateCommentRequestDTO;
 import alan.nguyen.dto.interaction.ReactionRequestDTO;
+import alan.nguyen.dto.interaction.ReactionUserResponseDTO;
 
 import java.util.UUID;
 
@@ -17,6 +18,9 @@ public interface PostInteractionService {
 
     /** Lấy danh sách bình luận có phân trang */
     PageResponseDTO<CommentResponseDTO> getPostComments(UUID postId, int page, int size);
+
+    /** Lấy danh sách reaction có phân trang */
+    PageResponseDTO<ReactionUserResponseDTO> getPostReactions(UUID postId, int page, int size);
 
     /** Xóa mềm bình luận (Tác giả bình luận hoặc tác giả bài viết có quyền xóa) */
     void deleteComment(UUID currentUserId, UUID commentId);

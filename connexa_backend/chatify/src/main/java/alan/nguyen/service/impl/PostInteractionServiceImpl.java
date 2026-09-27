@@ -4,6 +4,7 @@ import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.dto.interaction.CommentResponseDTO;
 import alan.nguyen.dto.interaction.CreateCommentRequestDTO;
 import alan.nguyen.dto.interaction.ReactionRequestDTO;
+import alan.nguyen.dto.interaction.ReactionUserResponseDTO;
 import alan.nguyen.entity.Post;
 import alan.nguyen.entity.PostComment;
 import alan.nguyen.entity.PostReaction;
@@ -127,5 +128,26 @@ public class PostInteractionServiceImpl implements PostInteractionService {
         }
 
         comment.setContent("Bình luận đã bị xóa.");
+    }
+
+    @Override
+    public PageResponseDTO<ReactionUserResponseDTO> getPostReactions(UUID postId, int page, int size) {
+        /** 1. Kiểm tra bài viết có tồn tại hay không */
+        postRepo.findActiveById(postId)
+                .orElseThrow(() -> new NotFoundException("Bài viết không tồn tại hoặc đã bị xóa"));
+
+        /** 2. Phân trang */
+        int pageIndex = Math.max(0, page);
+        int pageSize = Math.min(Math.max(1, size), 50);
+
+        Page pageable = Page.of(pageIndex, pageSize);
+        PanacheQuery<PostReaction> query = reactionRepo.findByPostId(postId, pageable);
+
+        /** 3. Chuyển đổi Entity sang DTO */
+        List<ReactionUserResponseDTO> items = query.list().stream()
+                .map(ReactionUserResponseDTO::fromEntity)
+                .toList();
+
+        return PageResponseDTO.of(items, query.page().index, query.page().size, query.count(), query.pageCount());
     }
 }

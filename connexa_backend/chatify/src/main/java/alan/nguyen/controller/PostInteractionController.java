@@ -5,6 +5,7 @@ import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.dto.interaction.CommentResponseDTO;
 import alan.nguyen.dto.interaction.CreateCommentRequestDTO;
 import alan.nguyen.dto.interaction.ReactionRequestDTO;
+import alan.nguyen.dto.interaction.ReactionUserResponseDTO;
 import alan.nguyen.service.PostInteractionService;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
@@ -82,5 +83,19 @@ public class PostInteractionController {
         UUID currentUserId = UUID.fromString(jwt.getSubject());
         interactionService.deleteComment(currentUserId, commentId);
         return Response.ok(ApiResponse.success("Đã xóa bình luận thành công", null)).build();
+    }
+
+    /**
+     * Lấy danh sách Reaction của bài viết có phân trang
+     */
+    @GET
+    @Path("/{postId}/reactions")
+    public Response getPostReactions(
+            @PathParam("postId") UUID postId,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("20") int size) {
+
+        PageResponseDTO<ReactionUserResponseDTO> response = interactionService.getPostReactions(postId, page, size);
+        return Response.ok(ApiResponse.success(response)).build();
     }
 }
