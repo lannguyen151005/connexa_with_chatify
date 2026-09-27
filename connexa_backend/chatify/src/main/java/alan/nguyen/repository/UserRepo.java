@@ -11,7 +11,8 @@ import java.util.UUID;
 @ApplicationScoped
 public class UserRepo implements PanacheRepositoryBase<User, UUID> {
     public Response getProfile(UUID userId) {
-        String query = "SELECT u.email, u.avatar_url, u.username, u.password " +
+        String query =
+                    "SELECT u.email, u.avatar_url, u.username, u.password " +
                 "FROM User u " +
                 "WHERE u.id = ?1";
         ProfileResponseDTO profile = getEntityManager()
