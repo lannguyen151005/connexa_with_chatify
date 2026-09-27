@@ -4,6 +4,7 @@ import alan.nguyen.common.FriendRequestStatus;
 import alan.nguyen.entity.FriendRequest;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 
 import java.util.UUID;
 
@@ -66,6 +67,7 @@ public class FriendRequestRepo
                 "id = ?1 and receiver.id = ?2",
                 requestId,
                 receiverId
-        ).firstResult();
+        ).withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResult();
     }
 }

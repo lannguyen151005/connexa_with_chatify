@@ -15,7 +15,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 
 import java.util.UUID;
 
-@Path("/api/friend-requests")
+@Path("/api/v1/friend-requests")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Authenticated
@@ -66,7 +66,7 @@ public class FriendRequestController {
     /**
      * Chấp nhận lời mời kết bạn
      * <p>
-     * Endpoint: PATCH /api/friend-requests/{id}/accept
+     * Endpoint: PUT /api/v1/friend-requests/{id}/accept
      * Quyền: Chỉ người nhận (Receiver) mới có thể chấp nhận
      */
     @PUT
@@ -90,7 +90,7 @@ public class FriendRequestController {
     /**
      * Từ chối lời mời kết bạn
      * <p>
-     * Endpoint: PATCH /api/friend-requests/{id}/reject
+     * Endpoint: PUT /api/v1/friend-requests/{id}/reject
      * Quyền: Chỉ người nhận (Receiver) mới có thể từ chối
      */
     @PUT
