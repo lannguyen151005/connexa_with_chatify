@@ -126,8 +126,6 @@ public class PostInteractionServiceImpl implements PostInteractionService {
             throw new ForbiddenException("Bạn không có quyền xóa bình luận này");
         }
 
-        comment.setDeleted(true);
-        Post post = comment.getPost();
-        post.setComment_count(Math.max(0, post.getComment_count() - 1));
+        comment.setContent("Bình luận đã bị xóa.");
     }
 }
