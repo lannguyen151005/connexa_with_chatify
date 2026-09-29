@@ -1,8 +1,8 @@
 package alan.nguyen.controller;
 
-import alan.nguyen.dto.FriendRequestRequestDTO;
-import alan.nguyen.dto.FriendRequestResponseDTO;
-import alan.nguyen.service.FriendRequestService;
+import alan.nguyen.dto.FriendshipRequestDTO;
+import alan.nguyen.dto.FriendshipResponseDTO;
+import alan.nguyen.service.FriendshipService;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -22,10 +22,10 @@ import java.util.UUID;
 
 // Liên kết trực tiếp tới SecurityScheme đã có sẵn của hệ thống
 @SecurityRequirement(name = "SecurityScheme")
-public class FriendRequestController {
+public class FriendshipController {
 
     @Inject
-    FriendRequestService friendRequestsService;
+    FriendshipService friendshipService;
 
     @Inject
     JsonWebToken jwt;
@@ -45,14 +45,14 @@ public class FriendRequestController {
      */
     @POST
     public Response sendRequest(
-            FriendRequestRequestDTO dto
+            FriendshipRequestDTO dto
     ) {
 
         // THAY THẾ LỆNH CŨ BẰNG HÀM VỪA TẠO
         UUID currentUserId = getCurrentUserId();
 
-        FriendRequestResponseDTO request =
-                friendRequestsService.sendRequest(
+        FriendshipResponseDTO request =
+                friendshipService.sendRequest(
                         currentUserId,
                         dto
                 );
@@ -78,7 +78,7 @@ public class FriendRequestController {
         UUID currentUserId = getCurrentUserId();
 
         // 2. Gọi Service xử lý logic đổi trạng thái thành ACCEPTED
-        FriendRequestResponseDTO request = friendRequestsService.acceptRequest(
+        FriendshipResponseDTO request = friendshipService.acceptRequest(
                 currentUserId,
                 requestId
         );
@@ -102,7 +102,7 @@ public class FriendRequestController {
         UUID currentUserId = getCurrentUserId();
 
         // 2. Gọi Service xử lý logic đổi trạng thái thành REJECTED
-        FriendRequestResponseDTO request = friendRequestsService.rejectRequest(
+        FriendshipResponseDTO request = friendshipService.rejectRequest(
                 currentUserId,
                 requestId
         );

@@ -7,6 +7,6 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class FriendRequestRequestDTO {
+public class FriendshipRequestDTO {
     private UUID receiverId;
 }

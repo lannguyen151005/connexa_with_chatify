@@ -1,11 +1,11 @@
 package alan.nguyen.service;
 
 import alan.nguyen.common.FriendRequestStatus;
-import alan.nguyen.dto.FriendRequestRequestDTO;
-import alan.nguyen.dto.FriendRequestResponseDTO;
-import alan.nguyen.entity.FriendRequest;
+import alan.nguyen.dto.FriendshipRequestDTO;
+import alan.nguyen.dto.FriendshipResponseDTO;
+import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
-import alan.nguyen.repository.FriendRequestRepo;
+import alan.nguyen.repository.FriendshipRepo;
 import alan.nguyen.repository.UserRepo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -17,10 +17,10 @@ import java.util.Map;
 import java.util.UUID;
 
 @ApplicationScoped
-public class FriendRequestService {
+public class FriendshipService {
 
     @Inject
-    FriendRequestRepo friendRequestRepo;
+    FriendshipRepo friendshipRepo;
 
     @Inject
     UserRepo userRepo;
@@ -29,9 +29,9 @@ public class FriendRequestService {
      * UC: Gửi lời mời kết bạn
      */
     @Transactional
-    public FriendRequestResponseDTO sendRequest(
+    public FriendshipResponseDTO sendRequest(
             UUID senderId,
-            FriendRequestRequestDTO dto
+            FriendshipRequestDTO dto
     ) {
         if (dto == null || dto.getReceiverId() == null) {
             throw new WebApplicationException(
@@ -69,7 +69,7 @@ public class FriendRequestService {
                 ));
 
         // 4. Kiểm tra đã là bạn chưa (HTTP 400 Bad Request)
-        if (friendRequestRepo.areFriends(senderId, receiverId)) {
+        if (friendshipRepo.areFriends(senderId, receiverId)) {
             throw new WebApplicationException(
                     Response.status(Response.Status.BAD_REQUEST)
                             .entity(Map.of("message", "Hai người đã là bạn bè"))
@@ -78,7 +78,7 @@ public class FriendRequestService {
         }
 
         // 5. Kiểm tra đã có lời mời PENDING (HTTP 409 Conflict)
-        if (friendRequestRepo.existsBetweenUsers(
+        if (friendshipRepo.existsBetweenUsers(
                 senderId,
                 receiverId,
                 FriendRequestStatus.PENDING
@@ -91,26 +91,26 @@ public class FriendRequestService {
         }
 
         // 6. Tạo FriendRequest
-        FriendRequest friendRequest = FriendRequest.builder()
+        Friendship friendship = Friendship.builder()
                 .sender(sender)
                 .receiver(receiver)
                 .status(FriendRequestStatus.PENDING)
                 .build();
 
         // 7. Lưu database
-        friendRequestRepo.persistAndFlush(friendRequest);
-        return FriendRequestResponseDTO.from(friendRequest);
+        friendshipRepo.persistAndFlush(friendship);
+        return FriendshipResponseDTO.from(friendship);
     }
 
     /**
      * UC: Chấp nhận lời mời kết bạn
      */
     @Transactional
-    public FriendRequestResponseDTO acceptRequest(
+    public FriendshipResponseDTO acceptRequest(
             UUID currentUserId,
             UUID requestId
     ) {
-        FriendRequest request = friendRequestRepo.findByIdAndReceiver(requestId, currentUserId);
+        Friendship request = friendshipRepo.findByIdAndReceiver(requestId, currentUserId);
 
         if (request == null) {
             throw new WebApplicationException(
@@ -129,19 +129,19 @@ public class FriendRequestService {
         }
 
         request.setStatus(FriendRequestStatus.ACCEPTED);
-        friendRequestRepo.flush();
-        return FriendRequestResponseDTO.from(request);
+        friendshipRepo.flush();
+        return FriendshipResponseDTO.from(request);
     }
 
     /**
      * UC: Từ chối lời mời kết bạn
      */
     @Transactional
-    public FriendRequestResponseDTO rejectRequest(
+    public FriendshipResponseDTO rejectRequest(
             UUID currentUserId,
             UUID requestId
     ) {
-        FriendRequest request = friendRequestRepo.findByIdAndReceiver(requestId, currentUserId);
+        Friendship request = friendshipRepo.findByIdAndReceiver(requestId, currentUserId);
 
         if (request == null) {
             throw new WebApplicationException(
@@ -160,7 +160,7 @@ public class FriendRequestService {
         }
 
         request.setStatus(FriendRequestStatus.REJECTED);
-        friendRequestRepo.flush();
-        return FriendRequestResponseDTO.from(request);
+        friendshipRepo.flush();
+        return FriendshipResponseDTO.from(request);
     }
 }

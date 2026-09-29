@@ -1,7 +1,7 @@
 package alan.nguyen.dto;
 
 import alan.nguyen.common.FriendRequestStatus;
-import alan.nguyen.entity.FriendRequest;
+import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FriendRequestResponseDTO {
+public class FriendshipResponseDTO {
 
     private UUID id;
     private UserSummaryDTO sender;
@@ -22,8 +22,8 @@ public class FriendRequestResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static FriendRequestResponseDTO from(FriendRequest request) {
-        return new FriendRequestResponseDTO(
+    public static FriendshipResponseDTO from(Friendship request) {
+        return new FriendshipResponseDTO(
                 request.getId(),
                 UserSummaryDTO.from(request.getSender()),
                 UserSummaryDTO.from(request.getReceiver()),
