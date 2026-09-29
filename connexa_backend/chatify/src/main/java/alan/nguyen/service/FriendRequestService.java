@@ -1,0 +1,166 @@
+package alan.nguyen.service;
+
+import alan.nguyen.common.FriendRequestStatus;
+import alan.nguyen.dto.FriendRequestRequestDTO;
+import alan.nguyen.dto.FriendRequestResponseDTO;
+import alan.nguyen.entity.FriendRequest;
+import alan.nguyen.entity.User;
+import alan.nguyen.repository.FriendRequestRepo;
+import alan.nguyen.repository.UserRepo;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+
+import java.util.Map;
+import java.util.UUID;
+
+@ApplicationScoped
+public class FriendRequestService {
+
+    @Inject
+    FriendRequestRepo friendRequestRepo;
+
+    @Inject
+    UserRepo userRepo;
+
+    /**
+     * UC: Gửi lời mời kết bạn
+     */
+    @Transactional
+    public FriendRequestResponseDTO sendRequest(
+            UUID senderId,
+            FriendRequestRequestDTO dto
+    ) {
+        if (dto == null || dto.getReceiverId() == null) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("message", "Thiếu thông tin người nhận"))
+                            .build()
+            );
+        }
+
+        UUID receiverId = dto.getReceiverId();
+
+        // 1. Không cho phép gửi cho chính mình (HTTP 400 Bad Request)
+        if (senderId.equals(receiverId)) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("message", "Không thể gửi lời mời kết bạn cho chính mình"))
+                            .build()
+            );
+        }
+
+        // 2. Kiểm tra người gửi tồn tại (HTTP 404 Not Found)
+        User sender = userRepo.findByIdOptional(senderId)
+                .orElseThrow(() -> new WebApplicationException(
+                        Response.status(Response.Status.NOT_FOUND)
+                                .entity(Map.of("message", "Không tìm thấy người gửi"))
+                                .build()
+                ));
+
+        // 3. Kiểm tra người nhận tồn tại (HTTP 404 Not Found)
+        User receiver = userRepo.findByIdOptional(receiverId)
+                .orElseThrow(() -> new WebApplicationException(
+                        Response.status(Response.Status.NOT_FOUND)
+                                .entity(Map.of("message", "Không tìm thấy người nhận"))
+                                .build()
+                ));
+
+        // 4. Kiểm tra đã là bạn chưa (HTTP 400 Bad Request)
+        if (friendRequestRepo.areFriends(senderId, receiverId)) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("message", "Hai người đã là bạn bè"))
+                            .build()
+            );
+        }
+
+        // 5. Kiểm tra đã có lời mời PENDING (HTTP 409 Conflict)
+        if (friendRequestRepo.existsBetweenUsers(
+                senderId,
+                receiverId,
+                FriendRequestStatus.PENDING
+        )) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.CONFLICT)
+                            .entity(Map.of("message", "Bạn đã gửi lời mời kết bạn cho người này rồi"))
+                            .build()
+            );
+        }
+
+        // 6. Tạo FriendRequest
+        FriendRequest friendRequest = FriendRequest.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .status(FriendRequestStatus.PENDING)
+                .build();
+
+        // 7. Lưu database
+        friendRequestRepo.persistAndFlush(friendRequest);
+        return FriendRequestResponseDTO.from(friendRequest);
+    }
+
+    /**
+     * UC: Chấp nhận lời mời kết bạn
+     */
+    @Transactional
+    public FriendRequestResponseDTO acceptRequest(
+            UUID currentUserId,
+            UUID requestId
+    ) {
+        FriendRequest request = friendRequestRepo.findByIdAndReceiver(requestId, currentUserId);
+
+        if (request == null) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.NOT_FOUND)
+                            .entity(Map.of("message", "Không tìm thấy lời mời kết bạn"))
+                            .build()
+            );
+        }
+
+        if (request.getStatus() != FriendRequestStatus.PENDING) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("message", "Lời mời đã được xử lý"))
+                            .build()
+            );
+        }
+
+        request.setStatus(FriendRequestStatus.ACCEPTED);
+        friendRequestRepo.flush();
+        return FriendRequestResponseDTO.from(request);
+    }
+
+    /**
+     * UC: Từ chối lời mời kết bạn
+     */
+    @Transactional
+    public FriendRequestResponseDTO rejectRequest(
+            UUID currentUserId,
+            UUID requestId
+    ) {
+        FriendRequest request = friendRequestRepo.findByIdAndReceiver(requestId, currentUserId);
+
+        if (request == null) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.NOT_FOUND)
+                            .entity(Map.of("message", "Không tìm thấy lời mời kết bạn"))
+                            .build()
+            );
+        }
+
+        if (request.getStatus() != FriendRequestStatus.PENDING) {
+            throw new WebApplicationException(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("message", "Lời mời đã được xử lý"))
+                            .build()
+            );
+        }
+
+        request.setStatus(FriendRequestStatus.REJECTED);
+        friendRequestRepo.flush();
+        return FriendRequestResponseDTO.from(request);
+    }
+}
