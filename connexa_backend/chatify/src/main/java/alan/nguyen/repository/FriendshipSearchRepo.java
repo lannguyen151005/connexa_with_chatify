@@ -1,15 +1,15 @@
 package alan.nguyen.repository;
 
 import alan.nguyen.common.FriendRequestStatus;
-import alan.nguyen.entity.FriendRequest;
+import alan.nguyen.entity.Friendship;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.UUID;
 
 @ApplicationScoped
-public class FriendRequestSearchRepo
-        implements PanacheRepositoryBase<FriendRequest, Long> {
+public class FriendshipSearchRepo
+        implements PanacheRepositoryBase<Friendship, Long> {
 
     public boolean areFriends(UUID user1, UUID user2) {
 
@@ -75,7 +75,7 @@ public class FriendRequestSearchRepo
 
         java.util.Set<UUID> set1 = new java.util.HashSet<>();
 
-        for (FriendRequest request : friendsOfUser1) {
+        for (Friendship request : friendsOfUser1) {
 
             UUID friendId;
 
@@ -90,7 +90,7 @@ public class FriendRequestSearchRepo
 
         java.util.Set<UUID> set2 = new java.util.HashSet<>();
 
-        for (FriendRequest request : friendsOfUser2) {
+        for (Friendship request : friendsOfUser2) {
 
             UUID friendId;
 

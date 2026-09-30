@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FriendRequest {
+public class Friendship {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

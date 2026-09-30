@@ -114,6 +114,11 @@
             <artifactId>quarkus-langchain4j-openai</artifactId>
             <version>1.10.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-flyway</artifactId>
+            <version>3.39.5</version>
+        </dependency>
     </dependencies>
 
     <build>

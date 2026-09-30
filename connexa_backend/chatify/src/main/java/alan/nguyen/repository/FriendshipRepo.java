@@ -1,7 +1,7 @@
 package alan.nguyen.repository;
 
 import alan.nguyen.common.FriendRequestStatus;
-import alan.nguyen.entity.FriendRequest;
+import alan.nguyen.entity.Friendship;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.LockModeType;
@@ -9,8 +9,8 @@ import jakarta.persistence.LockModeType;
 import java.util.UUID;
 
 @ApplicationScoped
-public class FriendRequestRepo
-        implements PanacheRepositoryBase<FriendRequest, UUID> {
+public class FriendshipRepo
+        implements PanacheRepositoryBase<Friendship, UUID> {
 
     /**
      * Kiểm tra giữa 2 user đã tồn tại FriendRequest
@@ -58,7 +58,7 @@ public class FriendRequestRepo
      * Điều này đảm bảo chỉ người nhận lời mời
      * mới có quyền accept/reject.
      */
-    public FriendRequest findByIdAndReceiver(
+    public Friendship findByIdAndReceiver(
             UUID requestId,
             UUID receiverId
     ) {

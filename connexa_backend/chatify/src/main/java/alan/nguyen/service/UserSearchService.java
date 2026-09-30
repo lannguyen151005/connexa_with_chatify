@@ -2,7 +2,7 @@ package alan.nguyen.service;
 
 import alan.nguyen.dto.UserSearchResponseDTO;
 import alan.nguyen.entity.User;
-import alan.nguyen.repository.FriendRequestSearchRepo;
+import alan.nguyen.repository.FriendshipSearchRepo;
 import alan.nguyen.repository.UserSearchRepo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,7 +19,7 @@ public class UserSearchService {
     UserSearchRepo userSearchRepo;
 
     @Inject
-    FriendRequestSearchRepo friendRequestSearchRepo;
+    FriendshipSearchRepo friendshipSearchRepo;
 
     public List<UserSearchResponseDTO> search(
             String keyword,
@@ -45,12 +45,12 @@ public class UserSearchService {
 
             String relationship;
 
-            if (friendRequestSearchRepo
+            if (friendshipSearchRepo
                     .areFriends(currentUserId, user.getId())) {
 
                 relationship = "FRIEND";
 
-            } else if (friendRequestSearchRepo
+            } else if (friendshipSearchRepo
                     .hasPendingRequest(currentUserId, user.getId())) {
 
                 relationship = "PENDING";
@@ -61,7 +61,7 @@ public class UserSearchService {
             }
 
             long mutualFriends =
-                    friendRequestSearchRepo.countMutualFriends(
+                    friendshipSearchRepo.countMutualFriends(
                             currentUserId,
                             user.getId()
                     );
