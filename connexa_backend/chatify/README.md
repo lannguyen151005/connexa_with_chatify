@@ -6,6 +6,14 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 ## Running the application in dev mode
 
+On Windows, copy `.env.example` to `.env`, fill in local credentials, then run:
+
+```powershell
+.\dev.ps1
+```
+
+The `.env` file is local-only and is not committed. Keep JWT private keys out of Git as well.
+
 You can run your application in dev mode that enables live coding using:
 
 ```shell script
