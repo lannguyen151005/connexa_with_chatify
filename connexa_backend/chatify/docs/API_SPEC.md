@@ -44,7 +44,6 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
 | `GET` | `/api/v1/posts/user/{userId}` | User | Lấy bài viết trang cá nhân (Timeline) |
 | `PUT` | `/api/v1/posts/{id}` | Author | Cập nhật nội dung / quyền riêng tư |
 | `DELETE` | `/api/v1/posts/{id}` | Author / Admin | Xóa mềm bài viết (`is_deleted = true`) |
-| `POST` | `/api/v1/files/upload` | User | Upload ảnh/video lên Cloudinary |
 
 ---
 
@@ -199,24 +198,24 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
 
 ---
 
-## 4. API Phụ trợ: Tải lên Media (Cloudinary Upload)
+## 4. API Dùng Chung Liên Kết: Tải Lên Media (Shared Cloudinary Upload)
+> **Lưu ý**: Đây là API dùng chung của toàn hệ thống (đã có sẵn tại `alan.nguyen.controller.FileUploadController`), không thuộc `PostController`. Được ghi chú tại đây để Frontend nắm luồng 2 bước khi đăng bài có ảnh/video.
 
-- **Endpoint**: `POST /api/v1/files/upload`
+- **Endpoint**: `POST /api/upload`
+- **Headers**: `Authorization: Bearer <token>`
 - **Content-Type**: `multipart/form-data`
 - **Request Form-Data**:
   - `file`: File nhị phân (Ảnh: `.jpg`, `.png`, `.webp` hoặc Video: `.mp4`).
 - **Response Success (200 OK)**:
   ```json
   {
-    "success": true,
-    "message": "Tải tệp lên Cloudinary thành công",
-    "data": {
-      "secure_url": "https://res.cloudinary.com/.../post_img_123.jpg",
-      "media_type": "IMAGE",
-      "public_id": "connexa/posts/post_img_123"
-    }
+    "url": "https://res.cloudinary.com/demo/image/upload/sample.jpg"
   }
   ```
+- **Luồng tích hợp cho Frontend**:
+  1. Frontend gọi `POST /api/upload` với file đã chọn $\rightarrow$ Nhận về `{ "url": "..." }`.
+  2. Frontend đưa `url` này vào `media_url` trong `media_list` của `CreatePostRequestDTO`.
+  3. Frontend gọi `POST /api/v1/posts` để hoàn tất lưu bài viết.
 
 ---
 
