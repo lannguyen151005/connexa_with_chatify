@@ -28,10 +28,16 @@ public class PostResponseDTO {
     private boolean is_liked;
     private boolean is_edited;
     private List<PostMediaDTO> media_list;
+    @Builder.Default
+    private List<String> hashtags = Collections.emptyList();
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
     public static PostResponseDTO fromEntity(Post post) {
+        return fromEntity(post, Collections.emptyList());
+    }
+
+    public static PostResponseDTO fromEntity(Post post, List<String> hashtags) {
         if (post == null) {
             return null;
         }
@@ -42,6 +48,19 @@ public class PostResponseDTO {
                 .map(PostMediaDTO::fromEntity)
                 .toList();
 
+        return fromEntity(post, hashtags, media);
+    }
+
+    /**
+     * Mapper an toàn cho luồng Batch Loading:
+     * Nhận trực tiếp hashtags và mediaList đã được nạp sẵn từ ngoài,
+     * tuyệt đối KHÔNG gọi post.getMediaList() để tránh Lazy Loading N+1.
+     */
+    public static PostResponseDTO fromEntity(Post post, List<String> hashtags, List<PostMediaDTO> mediaList) {
+        if (post == null) {
+            return null;
+        }
+
         return PostResponseDTO.builder()
                 .id(post.getId())
                 .author(AuthorResponseDTO.fromEntity(post.getAuthor()))
@@ -51,7 +70,8 @@ public class PostResponseDTO {
                 .comment_count(post.getComment_count())
                 .is_liked(false) // Mặc định false, giai đoạn 2 sẽ kiểm tra user hiện tại đã like chưa
                 .is_edited(post.is_edited())
-                .media_list(media)
+                .media_list(mediaList != null ? mediaList : Collections.emptyList())
+                .hashtags(hashtags != null ? hashtags : Collections.emptyList())
                 .created_at(post.getCreated_at())
                 .updated_at(post.getUpdated_at())
                 .build();

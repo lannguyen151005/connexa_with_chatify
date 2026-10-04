@@ -364,3 +364,89 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
   "data": null
   }
   ```
+
+---
+
+## 8. Danh mục Endpoint Tìm kiếm Bài viết & Hashtag (Search & Hashtag APIs)
+
+### 8.1. Tìm kiếm bài viết theo từ khóa (Search Posts by Keyword)
+- **Endpoint**: `GET /api/v1/posts/search`
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**:
+  - `keyword` (String, required): Từ khóa tìm kiếm trong nội dung bài viết.
+  - `page` (int, optional, default: 0): Số trang.
+  - `size` (int, optional, default: 10): Kích thước trang (tối đa 50).
+- **Quy tắc phân quyền (Privacy)**:
+  - Chỉ trả về các bài viết chưa bị xóa mềm (`is_deleted = false`).
+  - Bài viết `PUBLIC`: Mọi người đều xem được.
+  - Bài viết `PRIVATE`: Chỉ tác giả xem được.
+  - Bài viết `FRIENDS_ONLY`: Tác giả và bạn bè có quan hệ `ACCEPTED` mới xem được.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Tìm kiếm bài viết thành công",
+    "data": {
+      "items": [
+        {
+          "id": "...",
+          "author": { "id": "...", "username": "...", "avatar_url": "..." },
+          "content": "Hôm nay đi chơi #dalat cùng bạn bè",
+          "privacy": "PUBLIC",
+          "like_count": 5,
+          "comment_count": 2,
+          "is_liked": false,
+          "is_edited": false,
+          "media_list": [],
+          "hashtags": ["dalat"],
+          "created_at": "...",
+          "updated_at": "..."
+        }
+      ],
+      "page": 0,
+      "size": 10,
+      "total_elements": 1,
+      "total_pages": 1,
+      "is_last": true
+    }
+  }
+  ```
+
+### 8.2. Tìm kiếm bài viết theo Hashtag (Search Posts by Hashtag)
+- **Endpoint**: `GET /api/v1/posts/tags/{tagName}`
+- **Headers**: `Authorization: Bearer <token>`
+- **Path Variable**: `tagName` (String): Tên hashtag (ví dụ: `dalat` hoặc `#dalat`, hệ thống tự chuẩn hóa).
+- **Query Parameters**:
+  - `page` (int, optional, default: 0): Số trang.
+  - `size` (int, optional, default: 10): Kích thước trang.
+- **Quy tắc phân quyền (Privacy)**: Tương tự như tìm kiếm theo từ khóa.
+- **Response Success (200 OK)**: Cấu trúc tương tự `GET /api/v1/posts/search`.
+
+### 8.3. Lấy danh sách Top Hashtags thịnh hành (Trending Hashtags)
+- **Endpoint**: `GET /api/v1/hashtags/trending`
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**:
+  - `limit` (int, optional, default: 10): Số lượng hashtag thịnh hành muốn lấy.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lấy danh sách hashtag thịnh hành thành công",
+    "data": [
+      {
+        "id": "UUID",
+        "name": "dalat",
+        "usage_count": 15,
+        "created_at": "..."
+      }
+    ]
+  }
+  ```
+
+### 8.4. Gợi ý Hashtag tự động hoàn thành (Autocomplete Suggestion)
+- **Endpoint**: `GET /api/v1/hashtags/suggest`
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**:
+  - `query` (String, required): Tiền tố hashtag người dùng đang gõ (ví dụ: `da` hoặc `#da`).
+  - `limit` (int, optional, default: 5): Số lượng gợi ý.
+- **Response Success (200 OK)**: Cấu trúc danh sách `HashtagResponseDTO` sắp xếp theo số lượng bài viết giảm dần.

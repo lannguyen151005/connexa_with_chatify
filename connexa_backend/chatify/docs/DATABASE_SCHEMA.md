@@ -84,9 +84,4 @@ Lưu trữ danh sách hình ảnh/video đính kèm (URL lưu trên Cloudinary).
 
 ---
 
-## 4. Lộ trình Mở rộng (Phase 2 Roadmap - Tạm thời DISABLE)
-Các bảng dưới đây đã được thiết kế sẵn khung cấu trúc và sẽ kích hoạt migration khi nhóm bước sang Giai đoạn 2:
-- **`comments`**: Quản lý bình luận đa cấp (Parent-Child).
-- **`post_reactions`**: Quản lý cảm xúc bài viết (`LIKE`, `LOVE`, `HAHA`,...).
-- **`friendships`**: Quản lý quan hệ bạn bè (`PENDING`, `ACCEPTED`).
-- **`conversations`, `participants`, `messages`**: Hệ thống Chatify Realtime.
+

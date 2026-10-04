@@ -48,27 +48,52 @@ public class Post {
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
-    private boolean is_deleted = false;
+    private boolean isDeleted = false;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<PostMedia> mediaList = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.created_at = LocalDateTime.now();
-        this.updated_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updated_at = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // Các helper method đảm bảo tương thích ngược mã nguồn cũ
+    public boolean is_deleted() {
+        return this.isDeleted;
+    }
+
+    public void set_deleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public LocalDateTime getCreated_at() {
+        return this.createdAt;
+    }
+
+    public void setCreated_at(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdated_at() {
+        return this.updatedAt;
+    }
+
+    public void setUpdated_at(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     /**
