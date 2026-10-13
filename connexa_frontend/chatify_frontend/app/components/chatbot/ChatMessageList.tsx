@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { IChatMessage, BOT_METADATA } from './types';
+import { IChatMessage, BOT_METADATA, DEFAULT_QUICK_PROMPTS } from './types';
 import { ChatMessageItem } from './ChatMessageItem';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -7,14 +7,17 @@ interface ChatMessageListProps {
   messages: IChatMessage[];
   isLoading: boolean;
   botAvatarUrl?: string;
+  onSelectPrompt?: (promptText: string) => void;
 }
 
-export const ChatMessageList: React.FC<ChatMessageListProps> = ({
+export const ChatMessageList: React.FC<ChatMessageListProps> = React.memo(({
   messages,
   isLoading,
   botAvatarUrl = BOT_METADATA.avatarUrl,
+  onSelectPrompt,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const prevMsgCountRef = useRef(messages.length);
 
   // Tự động cuộn xuống tin nhắn mới nhất
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -22,8 +25,15 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+    // Nếu lần đầu tải lịch sử: cuộn tức thì (auto) để không giật animation
+    if (prevMsgCountRef.current === 0 && messages.length > 0) {
+      scrollToBottom('auto');
+    } else if (messages.length > prevMsgCountRef.current || isLoading) {
+      // Chỉ cuộn mượt khi có tin nhắn mới thêm vào hoặc bot bật trạng thái suy nghĩ
+      scrollToBottom('smooth');
+    }
+    prevMsgCountRef.current = messages.length;
+  }, [messages.length, isLoading]);
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 overscroll-contain">
@@ -42,6 +52,31 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
           </h4>
           <div className="text-xs text-gray-600 text-left bg-white p-3 rounded-xl border border-sky-100/80 shadow-xs mt-2">
             <MarkdownRenderer content={BOT_METADATA.defaultGreeting} />
+          </div>
+
+          {/* Gợi ý nhanh: Nằm ngay bên dưới đoạn văn bản chào mừng */}
+          <div className="mt-3 pt-2.5 border-t border-sky-200/60 text-left">
+            <div className="flex items-center gap-1.5 mb-2 px-0.5">
+              <i className="fa-classic fa-solid fa-wand-magic-sparkles text-xs text-sky-600" aria-hidden="true" />
+              <span className="text-[11px] font-bold text-sky-800 uppercase tracking-wider">
+                Gợi ý nhanh cho bạn
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {DEFAULT_QUICK_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt.id}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => onSelectPrompt?.(prompt.promptText)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-sky-900 bg-white border border-sky-200 rounded-xl shadow-2xs hover:bg-sky-100/70 hover:border-sky-300 transition-all cursor-pointer disabled:opacity-50 select-none active:scale-95"
+                  title={prompt.promptText}
+                >
+                  <i className={`${prompt.icon} text-xs text-sky-600`} aria-hidden="true" />
+                  <span>{prompt.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -80,4 +115,6 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
       <div ref={messagesEndRef} />
     </div>
   );
-};
+});
+
+ChatMessageList.displayName = 'ChatMessageList';

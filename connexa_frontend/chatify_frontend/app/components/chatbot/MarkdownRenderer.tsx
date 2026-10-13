@@ -1,15 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 /**
  * Trình render Markdown thuần (Zero-dependency)
- * Hỗ trợ an toàn các định dạng văn bản phổ biến mà LLM sinh ra:
- * - In đậm: **nội dung**
- * - In nghiêng: *nội dung*
- * - Code inline / hashtag: `code`
- * - Khối trích dẫn: > trích dẫn
- * - Danh sách gạch đầu dòng: - mục hoặc * mục
- * - Danh sách số: 1. mục
- * - Xuống dòng: \n
+ * Tối ưu hoá hiệu năng với React.memo và regex deterministic chống ReDoS
  */
 
 interface MarkdownRendererProps {
@@ -17,15 +10,17 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
-  const lines = content.split('\n');
+// Regex deterministic: không dùng wildcard '.*?' mà giới hạn ký tự rõ ràng để tránh backtracking
+const INLINE_REGEX = /(\*\*[^*\n]+?\*\*|\*[^*\n]+?\*|`[^`\n]+?`)/g;
+
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content, className = '' }) => {
+  const lines = useMemo(() => content.split('\n'), [content]);
 
   const renderInline = (text: string): React.ReactNode => {
-    // Regex tách các định dạng inline: bold (**...**), italic (*...*), code (`...`)
-    const tokens = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
+    const tokens = text.split(INLINE_REGEX);
 
     return tokens.map((token, idx) => {
-      if (token.startsWith('**') && token.endsWith('**')) {
+      if (token.startsWith('**') && token.endsWith('**') && token.length >= 4) {
         return (
           <strong key={idx} className="font-semibold text-gray-900">
             {token.slice(2, -2)}
@@ -39,7 +34,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           </em>
         );
       }
-      if (token.startsWith('`') && token.endsWith('`')) {
+      if (token.startsWith('`') && token.endsWith('`') && token.length >= 2) {
         return (
           <code
             key={idx}
@@ -109,4 +104,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       })}
     </div>
   );
-};
+});
+
+MarkdownRenderer.displayName = 'MarkdownRenderer';

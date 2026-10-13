@@ -1,5 +1,4 @@
-import React from 'react';
-import Swal from 'sweetalert2';
+import React, { useState } from 'react';
 import { BOT_METADATA } from './types';
 
 interface ChatbotHeaderProps {
@@ -21,22 +20,15 @@ export const ChatbotHeader: React.FC<ChatbotHeaderProps> = ({
   onMinimize,
   onClose,
 }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const handleConfirmClear = () => {
-    Swal.fire({
-      title: 'Làm mới cuộc trò chuyện?',
-      text: 'Toàn bộ tin nhắn hiện tại sẽ được xóa và bắt đầu lại phiên mới.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#0369A1',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Đồng ý',
-      cancelButtonText: 'Hủy',
-      reverseButtons: true,
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onClearChat();
-      }
-    });
+    setShowConfirm(true);
+  };
+
+  const handleExecuteClear = () => {
+    setShowConfirm(false);
+    onClearChat();
   };
 
   return (
@@ -101,6 +93,42 @@ export const ChatbotHeader: React.FC<ChatbotHeaderProps> = ({
           <i className="fa-classic fa-solid fa-xmark text-sm" aria-hidden="true" />
         </button>
       </div>
+
+      {/* Hộp thoại xác nhận làm mới cuộc trò chuyện thuần 100% Tailwind CSS */}
+      {showConfirm && (
+        <div className="absolute inset-x-2.5 top-12 z-50 p-3.5 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-sky-200 text-gray-800 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-start gap-2.5">
+            <div
+              className="w-7 h-7 bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5"
+              style={{ borderRadius: '9999px' }}
+            >
+              <i className="fa-classic fa-solid fa-rotate-right text-xs" aria-hidden="true" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-xs font-bold text-gray-900 leading-tight">Làm mới cuộc trò chuyện?</h4>
+              <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                Toàn bộ tin nhắn hiện tại sẽ được xóa và bắt đầu lại phiên mới.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setShowConfirm(false)}
+              className="px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={handleExecuteClear}
+              className="px-3 py-1 text-xs font-semibold text-white bg-[#0369A1] hover:bg-sky-800 rounded-lg shadow-xs transition-colors cursor-pointer"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

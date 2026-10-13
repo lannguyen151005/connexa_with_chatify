@@ -8,7 +8,7 @@ interface ChatMessageItemProps {
   botAvatarUrl: string;
 }
 
-export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, botAvatarUrl }) => {
+export const ChatMessageItem: React.FC<ChatMessageItemProps> = React.memo(({ message, botAvatarUrl }) => {
   const [copied, setCopied] = useState(false);
   const isUser = message.sender === 'user';
 
@@ -78,4 +78,6 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, botAv
       </div>
     </div>
   );
-};
+});
+
+ChatMessageItem.displayName = 'ChatMessageItem';

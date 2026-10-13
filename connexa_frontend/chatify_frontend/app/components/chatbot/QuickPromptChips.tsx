@@ -4,19 +4,34 @@ import { DEFAULT_QUICK_PROMPTS, IQuickPrompt } from './types';
 interface QuickPromptChipsProps {
   onSelectPrompt: (promptText: string) => void;
   disabled?: boolean;
+  onClose?: () => void;
 }
 
-export const QuickPromptChips: React.FC<QuickPromptChipsProps> = ({
+export const QuickPromptChips: React.FC<QuickPromptChipsProps> = React.memo(({
   onSelectPrompt,
   disabled = false,
+  onClose,
 }) => {
   return (
-    <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/70">
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <i className="fa-classic fa-solid fa-wand-magic-sparkles text-xs text-sky-600" aria-hidden="true" />
-        <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-          Gợi ý nhanh cho bạn
-        </span>
+    <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/80 transition-all">
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <i className="fa-classic fa-solid fa-wand-magic-sparkles text-xs text-sky-600" aria-hidden="true" />
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+            Gợi ý nhanh cho bạn
+          </span>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/60 transition-colors cursor-pointer"
+            title="Ẩn gợi ý"
+            aria-label="Ẩn gợi ý"
+          >
+            <i className="fa-classic fa-solid fa-xmark text-xs" aria-hidden="true" />
+          </button>
+        )}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {DEFAULT_QUICK_PROMPTS.map((prompt: IQuickPrompt) => (
@@ -35,4 +50,6 @@ export const QuickPromptChips: React.FC<QuickPromptChipsProps> = ({
       </div>
     </div>
   );
-};
+});
+
+QuickPromptChips.displayName = 'QuickPromptChips';
