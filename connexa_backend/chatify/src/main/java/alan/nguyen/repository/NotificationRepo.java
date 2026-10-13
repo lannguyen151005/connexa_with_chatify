@@ -10,9 +10,9 @@ import java.util.UUID;
 
 @ApplicationScoped
 public class NotificationRepo implements PanacheRepositoryBase<Notification, UUID> {
-    public PanacheQuery<Notification> getUnreadNortification(UUID currentUserId, Page pageable) {
-        return find("receiver_id = ?1 AND is_read = ?2 ORDER by created_at DESC",
-                currentUserId, false)
+    public PanacheQuery<Notification> getNotification(UUID currentUserId, Page pageable) {
+        return find("receiver_id = ?1 ORDER by created_at DESC",
+                currentUserId)
                 .page(pageable);
     }
 }

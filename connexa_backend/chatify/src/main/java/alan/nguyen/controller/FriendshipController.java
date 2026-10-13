@@ -1,8 +1,13 @@
 package alan.nguyen.controller;
 
+import alan.nguyen.common.ApiResponse;
 import alan.nguyen.dto.FriendshipRequestDTO;
 import alan.nguyen.dto.FriendshipResponseDTO;
+import alan.nguyen.dto.PageResponseDTO;
+import alan.nguyen.entity.Notification;
+import alan.nguyen.entity.User;
 import alan.nguyen.service.FriendshipService;
+import alan.nguyen.service.UserService;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -109,5 +114,16 @@ public class FriendshipController {
 
         // 3. Trả về HTTP 200 OK cùng dữ liệu đã cập nhật
         return Response.ok(request).build();
+    }
+
+    @GET
+    public Response getFriends(
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size
+    ){
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        PageResponseDTO<User> friends = friendshipService.getAllFriends(currentUserId, page, size);
+        return Response.ok(ApiResponse.success(friends))
+                .build();
     }
 }

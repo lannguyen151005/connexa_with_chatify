@@ -8,5 +8,5 @@ import java.util.UUID;
 @Data
 public class UpdateNotificationDTO {
     public UUID nortificationId;
-    public NortificationType type;
+    public boolean isRead;
 }

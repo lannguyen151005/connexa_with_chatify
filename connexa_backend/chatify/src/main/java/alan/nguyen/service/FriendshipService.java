@@ -3,6 +3,7 @@ package alan.nguyen.service;
 import alan.nguyen.common.FriendRequestStatus;
 import alan.nguyen.dto.FriendshipRequestDTO;
 import alan.nguyen.dto.FriendshipResponseDTO;
+import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
 import alan.nguyen.repository.FriendshipRepo;
@@ -162,5 +163,9 @@ public class FriendshipService {
         request.setStatus(FriendRequestStatus.REJECTED);
         friendshipRepo.flush();
         return FriendshipResponseDTO.from(request);
+    }
+
+    public PageResponseDTO<User> getAllFriends(UUID currentUserId, int page, int size) {
+        return friendshipRepo.getFriends(currentUserId, page, size);
     }
 }

@@ -17,6 +17,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,13 +29,13 @@ public class NotificationService {
     @Inject
     private NotificationRepo notiRepo;
 
-    public PageResponseDTO<Notification> getUnreadNortifications(UUID currentUserId, int page, int size) {
+    public PageResponseDTO<Notification> getNotifications(UUID currentUserId, int page, int size) {
 
         int pageIndex = Math.max(0, page);
         int pageSize = Math.min(Math.max(1, size), 50);
 
         Page pageable = Page.of(pageIndex, pageSize);
-        PanacheQuery<Notification> query = notiRepo.getUnreadNortification(currentUserId, pageable);
+        PanacheQuery<Notification> query = notiRepo.getNotification(currentUserId, pageable);
 
         List<Notification> items = query.stream().toList();
 
@@ -71,12 +72,13 @@ public class NotificationService {
         if(!currentUserId.equals(notification.getReceiver_id())){
             throw new ForbiddenException("You are not allowed to perform this action.");
         }
-        notification.setType(dto.type);
+        notification.set_read(dto.isRead);
         return notification;
     }
 
     @Transactional
-    public void deleteNortifications(UUID currentUserId, DeleteNotificationDTO dto) {
+    public List<Notification> deleteNortifications(UUID currentUserId, DeleteNotificationDTO dto) {
+        List<Notification> result = new ArrayList<>();
         for (UUID targetId : dto.target) {
 
             Notification notification = notiRepo.findByIdOptional(targetId)
@@ -89,8 +91,9 @@ public class NotificationService {
                         "You are not allowed to perform this action."
                 );
             }
-
+            result.add(notification);
             notiRepo.delete(notification);
         }
+        return result;
     }
 }

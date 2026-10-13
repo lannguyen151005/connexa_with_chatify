@@ -2,10 +2,13 @@ package alan.nguyen.repository;
 
 import alan.nguyen.dto.ProfileResponseDTO;
 import alan.nguyen.entity.User;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
 import java.util.UUID;
 
 @ApplicationScoped

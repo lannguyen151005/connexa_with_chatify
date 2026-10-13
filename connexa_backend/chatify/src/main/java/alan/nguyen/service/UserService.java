@@ -1,12 +1,16 @@
 package alan.nguyen.service;
 
 import alan.nguyen.common.SystemRole;
+import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.dto.RegisterRequestDTO;
 import alan.nguyen.dto.UpdateProfileDTO;
 import alan.nguyen.dto.UserDTO;
+import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
 import alan.nguyen.repository.UserRepo;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -105,17 +109,11 @@ public class UserService{
         }
         return false;
     }
+
     //Update user'status
     @Transactional
-    public void updateUserStatus(UUID userId, boolean isOnline){
-        User existing_user = userRepo.findById(userId);
-        if(existing_user!=null){
-            existing_user.set_online(isOnline);
-            if(!isOnline){
-                existing_user.setLast_seen(LocalDateTime.now());
-            }
-            userRepo.persist(existing_user);
-        }
+    public void updateUserStatus(UUID userId, boolean isOnline) {
+
     }
 
     @Transactional
@@ -175,4 +173,5 @@ public class UserService{
             userRepo.persist(user);
         }
     }
+
 }

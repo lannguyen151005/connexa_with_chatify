@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import java.util.List;
 import java.util.UUID;
 
 @Path("/api/v1/nortifications")
@@ -29,13 +30,13 @@ public class NotificationController {
     private NotificationService nortiService;
 
     @GET
-    public Response getUnreadNotifications (
+    public Response getNotifications (
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("10") int size
     ){
         UUID currentUserId = UUID.fromString(jwt.getSubject());
-        PageResponseDTO<Notification> unReadNortifications =  nortiService.getUnreadNortifications(currentUserId, page, size);
-        return Response.ok(ApiResponse.success("Get unread nortifications successfully", null)).build();
+        PageResponseDTO<Notification> notifications =  nortiService.getNotifications(currentUserId, page, size);
+        return Response.ok(ApiResponse.success(notifications)).build();
     }
 
     @POST
@@ -58,8 +59,8 @@ public class NotificationController {
     @DELETE
     public Response deleteNotification (DeleteNotificationDTO dto){
         UUID currentUserId = UUID.fromString(jwt.getSubject());
-        nortiService.deleteNortifications(currentUserId, dto);
-        return Response.ok(ApiResponse.success("Delete nortifications successfully."))
+        List<Notification> result = nortiService.deleteNortifications(currentUserId, dto);
+        return Response.ok(ApiResponse.success("Delete notifications successfully.", result))
                 .build();
     }
 }
