@@ -4,6 +4,7 @@ import alan.nguyen.common.FriendRequestStatus;
 import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -141,4 +142,5 @@ public class FriendshipRepo
                 totalPages
         );
     }
+
 }

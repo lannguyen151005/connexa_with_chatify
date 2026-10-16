@@ -1,9 +1,8 @@
 package alan.nguyen.repository;
 
 import alan.nguyen.common.GroupRole;
-import alan.nguyen.dto.MemberResponseDTO;
+import alan.nguyen.dto.chatify.conversation.MemberResponseDTO;
 import alan.nguyen.entity.Participant;
-import alan.nguyen.entity.User;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

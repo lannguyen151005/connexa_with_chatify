@@ -1,8 +1,8 @@
     package alan.nguyen.websocket;
 
     import alan.nguyen.controller.admin.AdminController;
-    import alan.nguyen.dto.MessageRequestDTO;
-    import alan.nguyen.dto.MessageResponseDTO;
+    import alan.nguyen.dto.chatify.message.MessageRequestDTO;
+    import alan.nguyen.dto.chatify.message.MessageResponseDTO;
     import alan.nguyen.entity.Message;
     import alan.nguyen.service.MessageReadService;
     import alan.nguyen.service.MessageService;

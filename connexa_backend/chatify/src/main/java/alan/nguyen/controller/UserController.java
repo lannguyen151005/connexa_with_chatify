@@ -1,8 +1,10 @@
 package alan.nguyen.controller;
 
 
-import alan.nguyen.dto.UpdateProfileDTO;
-import alan.nguyen.dto.UserDTO;
+import alan.nguyen.common.ApiResponse;
+import alan.nguyen.dto.chatify.user.UpdateProfileDTO;
+import alan.nguyen.dto.chatify.user.UserDTO;
+import alan.nguyen.dto.connexa.user.ProfileDetailDTO;
 import alan.nguyen.entity.User;
 import alan.nguyen.service.UserService;
 
@@ -12,17 +14,25 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.List;
 import java.util.UUID;
 
 
 @Path("/api/users")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Authenticated
 public class UserController {
 
     @Inject
     UserService userService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @GET
     @Path("/{id}")
@@ -58,5 +68,12 @@ public class UserController {
             return userService.deleteUser(id);
     }
 
+    @GET
+    @Path("/profile/{id}")
+    public Response getProfileDetail(UUID id){
+        ProfileDetailDTO result = userService.getProfileDetail(id);
+        return Response.ok(ApiResponse.success(result))
+                .build();
+    }
 }
 

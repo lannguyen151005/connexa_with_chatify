@@ -1,14 +1,11 @@
 package alan.nguyen.service.auth;
 
-import alan.nguyen.dto.LoginRequestDTO;
-import alan.nguyen.dto.UserDTO;
+import alan.nguyen.dto.chatify.user.LoginRequestDTO;
 import alan.nguyen.entity.User;
-import alan.nguyen.repository.UserRepo;
 import alan.nguyen.service.UserService;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 
 import java.util.*;

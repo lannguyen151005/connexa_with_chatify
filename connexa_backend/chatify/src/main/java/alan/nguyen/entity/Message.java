@@ -1,6 +1,5 @@
 package alan.nguyen.entity;
 
-import alan.nguyen.dto.MessageRequestDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

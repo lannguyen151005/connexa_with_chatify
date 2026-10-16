@@ -1,13 +1,13 @@
 package alan.nguyen.entity;
 
 import alan.nguyen.common.SystemRole;
-import alan.nguyen.dto.UserDTO;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import alan.nguyen.dto.chatify.user.UserDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.sql.Date;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -37,17 +37,10 @@ public class User{
     private LocalDateTime last_seen;
     @Column(name = "created_at")
     private LocalDateTime created_at;
+    //Tieu su cho nguoi dung
+    @Column(name = "note")
+    private String note;
+    @Column(name = "birthday")
+    private LocalDate birthday;
 
-
-    public void map(UserDTO dto){
-        this.id = null;
-        this.username = dto.getUsername();
-        this.email = dto.getEmail();
-        this.password = dto.getPassword();
-        this.role = SystemRole.USER;
-        this.avatar_url = dto.getUsername();
-        this.is_online = dto.is_online();
-        this.last_seen = dto.getLast_seen();
-        this.created_at = dto.getCreated_at();
-    }
 }

@@ -1,8 +1,8 @@
 package alan.nguyen.service;
 
 import alan.nguyen.common.FriendRequestStatus;
-import alan.nguyen.dto.FriendshipRequestDTO;
-import alan.nguyen.dto.FriendshipResponseDTO;
+import alan.nguyen.dto.connexa.friendship.FriendshipRequestDTO;
+import alan.nguyen.dto.connexa.friendship.FriendshipResponseDTO;
 import alan.nguyen.dto.PageResponseDTO;
 import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
@@ -11,8 +11,11 @@ import alan.nguyen.repository.UserRepo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.yaml.snakeyaml.constructor.DuplicateKeyException;
 
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +28,9 @@ public class FriendshipService {
 
     @Inject
     UserRepo userRepo;
+
+    @Inject
+    JsonWebToken jwt;
 
     /**
      * UC: Gửi lời mời kết bạn
@@ -165,7 +171,19 @@ public class FriendshipService {
         return FriendshipResponseDTO.from(request);
     }
 
-    public PageResponseDTO<User> getAllFriends(UUID currentUserId, int page, int size) {
-        return friendshipRepo.getFriends(currentUserId, page, size);
+    public PageResponseDTO<User> getAllFriends(UUID id, int page, int size) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        return friendshipRepo.getFriends(id, page, size);
+    }
+
+    @Transactional
+    public void deleteRelationship(UUID id) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+        if(currentUserId.equals(id))
+            throw new NotAuthorizedException("You are not allowed to perform this action");
+        if(!friendshipRepo.areFriends(id, currentUserId))
+            throw new RuntimeException("You can not perform this action.");
+        friendshipRepo.delete("(sender.id = ?1 AND receiver.id = ?2) OR" +
+                " (sender.id = ?3 AND receiver.id = ?4)", id, currentUserId, currentUserId, id);
     }
 }

@@ -1,7 +1,7 @@
 package alan.nguyen.entity;
 
 import alan.nguyen.common.GroupRole;
-import alan.nguyen.dto.ParticipantDTO;
+import alan.nguyen.dto.chatify.user.ParticipantDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,16 +1,16 @@
 package alan.nguyen.service;
 
+import alan.nguyen.common.FriendRequestStatus;
 import alan.nguyen.common.SystemRole;
-import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.RegisterRequestDTO;
-import alan.nguyen.dto.UpdateProfileDTO;
-import alan.nguyen.dto.UserDTO;
+import alan.nguyen.dto.chatify.user.RegisterRequestDTO;
+import alan.nguyen.dto.chatify.user.UpdateProfileDTO;
+import alan.nguyen.dto.chatify.user.UserDTO;
+import alan.nguyen.dto.connexa.user.ProfileDetailDTO;
 import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
+import alan.nguyen.repository.FriendshipRepo;
 import alan.nguyen.repository.UserRepo;
-import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Page;
+import alan.nguyen.service.impl.PostServiceImpl;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -31,6 +31,10 @@ public class UserService{
 
     @Inject
     JsonWebToken jwt;
+    @Inject
+    PostServiceImpl postServiceImpl;
+    @Inject
+    FriendshipRepo friendshipRepo;
 
     public List<User> getAll(){
         List<User> list = userRepo.findAll().list();
@@ -46,7 +50,11 @@ public class UserService{
                     )
                     .build();
         User newUser = new User();
-        newUser.map(dto);
+        newUser.setUsername(dto.username);
+        newUser.setEmail(dto.email);
+        newUser.setPassword(dto.password);
+        newUser.setRole(dto.role);
+
         userRepo.persist(newUser);
         return Response.ok(
                 Map.of("message", "Adding successfully")
@@ -140,15 +148,15 @@ public class UserService{
     }
 
     public Response getProfile(UUID userId) {
-        UUID myUserId = UUID.fromString(jwt.getSubject());
-        if(!userId.equals(myUserId))
-            return Response.serverError()
-                    .entity(
-                            Map.of(
-                                    "message",
-                                    "unauthorize"
-                            )
-                    ).build();
+//        UUID myUserId = UUID.fromString(jwt.getSubject());
+//        if(!userId.equals(myUserId))
+//            return Response.serverError()
+//                    .entity(
+//                            Map.of(
+//                                    "message",
+//                                    "unauthorize"
+//                            )
+//                    ).build();
         return userRepo.getProfile(userId);
     }
 
@@ -174,4 +182,37 @@ public class UserService{
         }
     }
 
+    public ProfileDetailDTO getProfileDetail(UUID id) {
+
+        ProfileDetailDTO result = new ProfileDetailDTO();
+
+        User targetUser = userRepo.findById(id);
+
+        if (targetUser == null) {
+            return null;
+        }
+
+        result.username = targetUser.getUsername();
+        result.avatarUrl = targetUser.getAvatar_url();
+        result.note = targetUser.getNote();
+        result.birthday = targetUser.getBirthday();
+
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+
+        if (currentUserId.equals(id)) {
+            result.requestStatus = null;
+            return result;
+        }
+
+        Friendship friendship = friendshipRepo.find(
+                "(sender.id = ?1 AND receiver.id = ?2) " +
+                        "OR (sender.id = ?3 AND receiver.id = ?4)",
+                currentUserId, id, id, currentUserId
+        ).firstResult();
+
+        result.requestStatus =
+                friendship != null ? friendship.getStatus() : null;
+
+        return result;
+    }
 }

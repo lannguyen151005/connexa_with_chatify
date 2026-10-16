@@ -1,9 +1,9 @@
 package alan.nguyen.service;
 
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.nortification.DeleteNotificationDTO;
-import alan.nguyen.dto.nortification.NotificationDTO;
-import alan.nguyen.dto.nortification.UpdateNotificationDTO;
+import alan.nguyen.dto.connexa.nortification.DeleteNotificationDTO;
+import alan.nguyen.dto.connexa.nortification.NotificationDTO;
+import alan.nguyen.dto.connexa.nortification.UpdateNotificationDTO;
 import alan.nguyen.entity.Notification;
 import alan.nguyen.entity.User;
 import alan.nguyen.repository.NotificationRepo;

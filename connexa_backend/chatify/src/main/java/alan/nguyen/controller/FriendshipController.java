@@ -1,13 +1,12 @@
 package alan.nguyen.controller;
 
 import alan.nguyen.common.ApiResponse;
-import alan.nguyen.dto.FriendshipRequestDTO;
-import alan.nguyen.dto.FriendshipResponseDTO;
+import alan.nguyen.dto.connexa.friendship.FriendshipRequestDTO;
+import alan.nguyen.dto.connexa.friendship.FriendshipResponseDTO;
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.entity.Notification;
+import alan.nguyen.entity.Friendship;
 import alan.nguyen.entity.User;
 import alan.nguyen.service.FriendshipService;
-import alan.nguyen.service.UserService;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -117,13 +116,24 @@ public class FriendshipController {
     }
 
     @GET
+    @Path("/{id}")
     public Response getFriends(
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("10") int size
+            @QueryParam("size") @DefaultValue("10") int size,
+            UUID id
     ){
-        UUID currentUserId = UUID.fromString(jwt.getSubject());
-        PageResponseDTO<User> friends = friendshipService.getAllFriends(currentUserId, page, size);
+        PageResponseDTO<User> friends = friendshipService.getAllFriends(id, page, size);
         return Response.ok(ApiResponse.success(friends))
+                .build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteRelationship(
+            UUID id
+    ){
+        friendshipService.deleteRelationship(id);
+        return Response.ok("Delete successfully")
                 .build();
     }
 }

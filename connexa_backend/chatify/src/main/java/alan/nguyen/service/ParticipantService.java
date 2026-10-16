@@ -1,8 +1,7 @@
 package alan.nguyen.service;
 
 import alan.nguyen.common.GroupRole;
-import alan.nguyen.dto.MemberResponseDTO;
-import alan.nguyen.entity.Participant;
+import alan.nguyen.dto.chatify.conversation.MemberResponseDTO;
 import alan.nguyen.repository.ParticipantRepo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

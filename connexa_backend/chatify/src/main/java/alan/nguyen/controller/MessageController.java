@@ -1,6 +1,6 @@
 package alan.nguyen.controller;
 
-import alan.nguyen.dto.MessageRequestDTO;
+import alan.nguyen.dto.chatify.message.MessageRequestDTO;
 import alan.nguyen.entity.Message;
 import alan.nguyen.service.MessageService;
 import io.quarkus.security.Authenticated;

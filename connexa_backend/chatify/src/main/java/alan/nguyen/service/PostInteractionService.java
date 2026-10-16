@@ -1,10 +1,10 @@
 package alan.nguyen.service;
 
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.interaction.CommentResponseDTO;
-import alan.nguyen.dto.interaction.CreateCommentRequestDTO;
-import alan.nguyen.dto.interaction.ReactionRequestDTO;
-import alan.nguyen.dto.interaction.ReactionUserResponseDTO;
+import alan.nguyen.dto.connexa.interaction.CommentResponseDTO;
+import alan.nguyen.dto.connexa.interaction.CreateCommentRequestDTO;
+import alan.nguyen.dto.connexa.interaction.ReactionRequestDTO;
+import alan.nguyen.dto.connexa.interaction.ReactionUserResponseDTO;
 
 import java.util.UUID;
 

@@ -1,0 +1,3 @@
+ALTER TABLE USERS
+    ADD note VARCHAR(255),
+ADD birthday DATE;

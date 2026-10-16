@@ -1,7 +1,7 @@
 package alan.nguyen.service;
 
 import alan.nguyen.common.GroupRole;
-import alan.nguyen.dto.UpdateConvDTO;
+import alan.nguyen.dto.chatify.conversation.UpdateConvDTO;
 import alan.nguyen.entity.Conversation;
 import alan.nguyen.entity.Participant;
 import alan.nguyen.entity.User;

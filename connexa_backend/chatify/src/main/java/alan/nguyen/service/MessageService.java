@@ -1,6 +1,6 @@
 package alan.nguyen.service;
 
-import alan.nguyen.dto.MessageResponseDTO;
+import alan.nguyen.dto.chatify.message.MessageResponseDTO;
 import alan.nguyen.entity.Message;
 import alan.nguyen.repository.MessageRepo;
 import alan.nguyen.repository.ParticipantRepo;

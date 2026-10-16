@@ -1,8 +1,7 @@
 package alan.nguyen.repository;
 
-import alan.nguyen.dto.UpdateConvDTO;
+import alan.nguyen.dto.chatify.conversation.UpdateConvDTO;
 import alan.nguyen.entity.Conversation;
-import alan.nguyen.entity.Participant;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.Response;

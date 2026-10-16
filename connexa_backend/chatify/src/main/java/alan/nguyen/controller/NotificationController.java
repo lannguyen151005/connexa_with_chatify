@@ -2,9 +2,9 @@ package alan.nguyen.controller;
 
 import alan.nguyen.common.ApiResponse;
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.nortification.DeleteNotificationDTO;
-import alan.nguyen.dto.nortification.NotificationDTO;
-import alan.nguyen.dto.nortification.UpdateNotificationDTO;
+import alan.nguyen.dto.connexa.nortification.DeleteNotificationDTO;
+import alan.nguyen.dto.connexa.nortification.NotificationDTO;
+import alan.nguyen.dto.connexa.nortification.UpdateNotificationDTO;
 import alan.nguyen.entity.Notification;
 import alan.nguyen.service.NotificationService;
 import io.quarkus.security.Authenticated;
