@@ -1,8 +1,8 @@
 package alan.nguyen.service.impl;
 
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.post.PostMediaDTO;
-import alan.nguyen.dto.post.PostResponseDTO;
+import alan.nguyen.dto.connexa.post.PostMediaDTO;
+import alan.nguyen.dto.connexa.post.PostResponseDTO;
 import alan.nguyen.entity.Post;
 import alan.nguyen.repository.PostMediaRepo;
 import alan.nguyen.repository.PostRepo;

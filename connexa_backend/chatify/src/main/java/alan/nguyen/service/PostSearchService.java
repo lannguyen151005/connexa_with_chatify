@@ -1,7 +1,7 @@
 package alan.nguyen.service;
 
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.post.PostResponseDTO;
+import alan.nguyen.dto.connexa.post.PostResponseDTO;
 
 import java.util.UUID;
 

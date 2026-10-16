@@ -2,7 +2,7 @@ package alan.nguyen.controller;
 
 import alan.nguyen.common.ApiResponse;
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.post.PostResponseDTO;
+import alan.nguyen.dto.connexa.post.PostResponseDTO;
 import alan.nguyen.service.PostSearchService;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
