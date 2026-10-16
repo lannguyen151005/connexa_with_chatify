@@ -44,6 +44,10 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
 | `GET` | `/api/v1/posts/user/{userId}` | User | Lấy bài viết trang cá nhân (Timeline) |
 | `PUT` | `/api/v1/posts/{id}` | Author | Cập nhật nội dung / quyền riêng tư |
 | `DELETE` | `/api/v1/posts/{id}` | Author / Admin | Xóa mềm bài viết (`is_deleted = true`) |
+| `GET` | `/api/v1/posts/search` | User | Tìm kiếm bài viết theo từ khóa nội dung (Phân trang, lọc privacy) |
+| `GET` | `/api/v1/posts/tags/{tagName}` | User | Tìm kiếm bài viết theo hashtag (Phân trang, lọc privacy) |
+| `GET` | `/api/v1/hashtags/trending` | User | Lấy danh sách Top Hashtags thịnh hành |
+| `GET` | `/api/v1/hashtags/suggest` | User | Gợi ý tự động hoàn thành Hashtag theo tiền tố |
 
 ---
 
@@ -362,5 +366,139 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
   "success": true,
   "message": "Đã xóa bình luận thành công",
   "data": null
+  }
+  ```
+
+---
+
+## 8. Danh mục Endpoint Tìm kiếm Bài viết & Hashtag (Search & Hashtag APIs)
+
+### 8.1. Tìm kiếm bài viết theo từ khóa (Search Posts by Keyword)
+- **Endpoint**: `GET /api/v1/posts/search`
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**:
+  - `keyword` (String, required): Từ khóa tìm kiếm trong nội dung bài viết.
+    - *Validation*: Tối đa 200 ký tự (vượt quá trả về `400 Bad Request`). Không tự ý truncate/cắt ngắn từ khóa.
+    - *Xử lý chuỗi rỗng*: Nếu `keyword` là `null`, chuỗi rỗng hoặc chỉ toàn khoảng trắng, API trả về ngay HTTP 200 kèm danh sách rỗng (tránh query database không cần thiết).
+  - `page` (int, optional, default: 0): Số trang cần lấy (`page >= 0`, nếu `< 0` trả về `400 Bad Request`).
+  - `size` (int, optional, default: 20): Kích thước trang (`1 <= size <= 30`, nếu ngoài khoảng trả về `400 Bad Request`).
+- **Quy tắc phân quyền (Privacy)**:
+  - Chỉ trả về các bài viết chưa bị xóa mềm (`is_deleted = false`).
+  - Bài viết `PUBLIC`: Mọi người đều xem được.
+  - Bài viết `PRIVATE`: Chỉ tác giả xem được.
+  - Bài viết `FRIENDS_ONLY`: Tác giả và bạn bè có quan hệ `ACCEPTED` mới xem được.
+- **Tối ưu hóa hiệu năng (O(1) Batch Queries)**:
+  - Sử dụng Batch Loading nạp toàn bộ Media và Hashtag cho $N$ bài viết trong trang chỉ với 3 câu truy vấn SQL độc lập, triệt tiêu hoàn toàn vấn đề N+1 query.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Tìm kiếm bài viết thành công",
+    "data": {
+      "items": [
+        {
+          "id": "c1f7b8a2-3e4d-4a1b-9f2c-1a2b3c4d5e6f",
+          "author": {
+            "id": "a9d8e7c6-5b4a-3f2e-1d0c-9b8a7f6e5d4c",
+            "username": "alan_nguyen",
+            "avatar_url": "https://res.cloudinary.com/.../avatar.jpg"
+          },
+          "content": "Hôm nay đi chơi #dalat cùng bạn bè",
+          "privacy": "PUBLIC",
+          "like_count": 5,
+          "comment_count": 2,
+          "is_liked": false,
+          "is_edited": false,
+          "media_list": [],
+          "hashtags": ["dalat"],
+          "created_at": "2026-10-04T12:00:00",
+          "updated_at": "2026-10-04T12:00:00"
+        }
+      ],
+      "page": 0,
+      "size": 20,
+      "total_elements": 1,
+      "total_pages": 1,
+      "is_last": true
+    }
+  }
+  ```
+- **Lỗi thường gặp (Error Responses)**:
+  - `400 Bad Request`:
+    - `{"success": false, "message": "Số trang (page) phải lớn hơn hoặc bằng 0", "data": null}`
+    - `{"success": false, "message": "Kích thước trang (size) phải nằm trong khoảng từ 1 đến 30", "data": null}`
+    - `{"success": false, "message": "Từ khóa tìm kiếm không được vượt quá 200 ký tự", "data": null}`
+
+---
+
+### 8.2. Tìm kiếm bài viết theo Hashtag (Search Posts by Hashtag)
+- **Endpoint**: `GET /api/v1/posts/tags/{tagName}`
+- **Headers**: `Authorization: Bearer <token>`
+- **Path Variable**: `tagName` (String, required): Tên hashtag (hỗ trợ cả dạng `dalat` hoặc `#dalat`).
+  - *Validation*: Tối đa 100 ký tự (vượt quá trả về `400 Bad Request`).
+  - *Chuẩn hóa*: Hệ thống tự động loại bỏ tiền tố `#` (nếu có), chuyển về chữ thường (`toLowerCase(Locale.ROOT)`) để tận dụng B-Tree Index trên trường `hashtags.name`.
+  - *Xử lý rỗng*: Nếu sau khi bỏ `#` mà chuỗi rỗng (ví dụ `#`), API trả về HTTP 200 kèm danh sách rỗng.
+- **Query Parameters**:
+  - `page` (int, optional, default: 0): Số trang (`page >= 0`, nếu `< 0` trả về `400 Bad Request`).
+  - `size` (int, optional, default: 20): Kích thước trang (`1 <= size <= 30`, nếu ngoài khoảng trả về `400 Bad Request`).
+- **Quy tắc phân quyền (Privacy)**: Tương tự như tìm kiếm theo từ khóa.
+- **Response Success (200 OK)**: Cấu trúc tương tự `GET /api/v1/posts/search`.
+- **Lỗi thường gặp (Error Responses)**:
+  - `400 Bad Request`:
+    - `{"success": false, "message": "Số trang (page) phải lớn hơn hoặc bằng 0", "data": null}`
+    - `{"success": false, "message": "Kích thước trang (size) phải nằm trong khoảng từ 1 đến 30", "data": null}`
+    - `{"success": false, "message": "Hashtag không được vượt quá 100 ký tự", "data": null}`
+
+---
+
+### 8.3. Lấy danh sách Top Hashtags thịnh hành (Trending Hashtags)
+- **Endpoint**: `GET /api/v1/hashtags/trending`
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**:
+  - `limit` (int, optional, default: 10): Số lượng hashtag thịnh hành muốn lấy.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lấy danh sách hashtag thịnh hành thành công",
+    "data": [
+      {
+        "id": "c1f7b8a2-3e4d-4a1b-9f2c-1a2b3c4d5e6f",
+        "name": "dalat",
+        "usage_count": 15,
+        "created_at": "2026-10-04T10:00:00"
+      }
+    ]
+  }
+  ```
+
+---
+
+### 8.4. Gợi ý Hashtag tự động hoàn thành (Autocomplete Suggestion)
+- **Endpoint**: `GET /api/v1/hashtags/suggest`
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**:
+  - `query` (String, required): Tiền tố hashtag người dùng đang gõ (ví dụ: `da` hoặc `#da`).
+  - `limit` (int, optional, default: 5): Số lượng gợi ý muốn lấy.
+  - Khi người dùng chuẩn bị đăng bài hoặc bình luận và gõ từ khóa (ví dụ: #da), ứng dụng frontend sẽ liên tục gọi API này. API sẽ tìm kiếm trong cơ sở dữ liệu các hashtag bắt đầu bằng chữ da (như #dalat, #danang, #datuyet) và trả về danh sách các hashtag phổ biến nhất (dựa vào usage_count - số lượng bài viết sử dụng hashtag đó) để hiển thị thành một danh sách thả xuống (dropdown) cho người dùng chọn nhanh.
+- **Response Success (200 OK)**: Cấu trúc danh sách `HashtagResponseDTO` sắp xếp theo số lượng bài viết giảm dần (`usage_count DESC`).
+  ```json
+  {
+    "success": true,
+    "message": "Lấy gợi ý hashtag thành công",
+    "data": [
+      {
+        "id": "c1f7b8a2-3e4d-4a1b-9f2c-1a2b3c4d5e6f",
+        "name": "dalat",
+        "usage_count": 15,
+        "created_at": "2026-10-04T10:00:00"
+      },
+      {
+        "id": "e8d7c6b5-4a3b-2c1d-0e9f-8a7b6c5d4e3f",
+        "name": "danang",
+        "usage_count": 8,
+        "created_at": "2026-10-04T11:00:00"
+      }
+    ]
   }
   ```

@@ -34,6 +34,9 @@ public class PostServiceImpl implements PostService {
     @Inject
     UserRepo userRepo;
 
+    @Inject
+    alan.nguyen.service.HashtagService hashtagService;
+
     @Override
     @Transactional
     public PostResponseDTO createPost(UUID currentUserId, CreatePostRequestDTO dto) {
@@ -47,7 +50,7 @@ public class PostServiceImpl implements PostService {
                 .like_count(0)
                 .comment_count(0)
                 .is_edited(false)
-                .is_deleted(false)
+                .isDeleted(false)
                 .build();
 
         // Xử lý danh sách media nếu có
@@ -64,7 +67,12 @@ public class PostServiceImpl implements PostService {
         }
 
         postRepo.persist(post);
-        return PostResponseDTO.fromEntity(post);
+
+        // Tự động trích xuất và đồng bộ hashtags
+        hashtagService.syncPostHashtags(post, post.getContent());
+        List<String> tags = hashtagService.getHashtagNamesByPostId(post.getId());
+
+        return PostResponseDTO.fromEntity(post, tags);
     }
 
     @Override
@@ -77,7 +85,8 @@ public class PostServiceImpl implements PostService {
             throw new ForbiddenException("Bạn không có quyền xem bài viết riêng tư này");
         }
 
-        return PostResponseDTO.fromEntity(post);
+        List<String> tags = hashtagService.getHashtagNamesByPostId(post.getId());
+        return PostResponseDTO.fromEntity(post, tags);
     }
 
     @Override
@@ -89,7 +98,7 @@ public class PostServiceImpl implements PostService {
         PanacheQuery<Post> query = postRepo.findFeed(currentUserId, pageable);
 
         List<PostResponseDTO> items = query.list().stream()
-                .map(PostResponseDTO::fromEntity)
+                .map(p -> PostResponseDTO.fromEntity(p, hashtagService.getHashtagNamesByPostId(p.getId())))
                 .toList();
 
         return PageResponseDTO.of(items, query.page().index, query.page().size, query.count(), query.pageCount());
@@ -102,15 +111,14 @@ public class PostServiceImpl implements PostService {
             throw new NotFoundException("Không tìm thấy người dùng này");
         }
 
-        boolean isOwner = currentUserId.equals(targetUserId);
         int pageIndex = Math.max(0, page);
         int pageSize = Math.min(Math.max(1, size), 50);
 
         Page pageable = Page.of(pageIndex, pageSize);
-        PanacheQuery<Post> query = postRepo.findUserTimeline(targetUserId, isOwner, pageable);
+        PanacheQuery<Post> query = postRepo.findUserTimeline(currentUserId, targetUserId, pageable);
 
         List<PostResponseDTO> items = query.list().stream()
-                .map(PostResponseDTO::fromEntity)
+                .map(p -> PostResponseDTO.fromEntity(p, hashtagService.getHashtagNamesByPostId(p.getId())))
                 .toList();
 
         return PageResponseDTO.of(items, query.page().index, query.page().size, query.count(), query.pageCount());
@@ -133,7 +141,11 @@ public class PostServiceImpl implements PostService {
         }
         post.set_edited(true);
 
-        return PostResponseDTO.fromEntity(post);
+        // Cập nhật lại hashtags khi nội dung bài viết thay đổi
+        hashtagService.syncPostHashtags(post, post.getContent());
+        List<String> tags = hashtagService.getHashtagNamesByPostId(post.getId());
+
+        return PostResponseDTO.fromEntity(post, tags);
     }
 
     @Override
@@ -155,5 +167,8 @@ public class PostServiceImpl implements PostService {
 
         // Xóa mềm: Bật cờ is_deleted = true
         post.set_deleted(true);
+
+        // Giảm usage_count và gỡ liên kết hashtag
+        hashtagService.removePostHashtags(post.getId());
     }
 }
