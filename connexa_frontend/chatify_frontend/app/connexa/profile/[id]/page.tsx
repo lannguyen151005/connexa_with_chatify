@@ -344,9 +344,11 @@ export default function UserProfilePage() {
                   border border-gray-100 bg-white
                   px-4 py-8 text-center text-sm text-gray-400
                   shadow-sm sm:px-6 sm:py-10 sm:text-base">
-            <PostCard
+            <PostCard 
               posts={userPosts}
-            />
+              onSelectViewDetail={(postId) => {
+                router.push(`/connexa/post-detail/${postId}`)
+              }}/>
           </div>
         </section>
       </main>

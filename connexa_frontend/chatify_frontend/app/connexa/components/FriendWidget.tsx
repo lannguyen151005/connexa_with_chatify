@@ -61,7 +61,7 @@ export const FriendWidget = ({
 
       <button
         onClick={() => {/* Xử lý xem tất cả bạn bè */}}
-        className="mt-4 w-full rounded-lg bg-[#3BBDF7] py-2 text-sm font-semibold text-white transition hover:bg-[#33a0d6]"
+        className="mt-4 w-full rounded bg-[#3BBDF7] py-2 text-sm font-semibold text-white transition hover:bg-[#33a0d6]"
       >
         Xem tất cả
       </button>
