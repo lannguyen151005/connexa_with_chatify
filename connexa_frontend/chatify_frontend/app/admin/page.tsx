@@ -10,6 +10,8 @@ import RoomManageView from './components/RoomManageView';
 import Sidebar from './components/Sidebar';
 import AdminHeader from './components/AdminHeader';
 import ModulePlaceholderView from './components/ModulePlaceholderView';
+import PostManageView from './components/posts/PostManageView';
+import ReportManageView from './components/reports/ReportManageView';
 import { AdminMenuTab, AdminProfile } from './types';
 
 export default function AdminWorkspace() {
@@ -22,6 +24,7 @@ export default function AdminWorkspace() {
   });
   const [isAuth, setIsAuth] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [pendingReportsCount, setPendingReportsCount] = useState(3);
 
   useEffect(() => {
     // Chế độ phát triển giao diện: bypass kiểm tra Auth nếu bật cờ trong .env.local
@@ -84,7 +87,7 @@ export default function AdminWorkspace() {
         onLogout={handleLogout}
         isOpen={isMobileSidebarOpen}
         closeSidebar={() => setIsMobileSidebarOpen(false)}
-        pendingReportsCount={3}
+        pendingReportsCount={pendingReportsCount}
       />
 
       {/* CỘT PHẢI: TOPBAR & NỘI DUNG CHÍNH */}
@@ -104,17 +107,11 @@ export default function AdminWorkspace() {
             )}
 
             {activeMenu === 'POSTS' && (
-              <ModulePlaceholderView
-                tab="POSTS"
-                onNavigateDashboard={() => setActiveMenu('DASHBOARD')}
-              />
+              <PostManageView onNavigateTab={setActiveMenu} />
             )}
 
             {activeMenu === 'REPORTS' && (
-              <ModulePlaceholderView
-                tab="REPORTS"
-                onNavigateDashboard={() => setActiveMenu('DASHBOARD')}
-              />
+              <ReportManageView onPendingCountChange={setPendingReportsCount} />
             )}
 
             {activeMenu === 'USERS' && <UserManageView />}

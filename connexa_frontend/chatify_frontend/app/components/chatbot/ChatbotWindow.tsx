@@ -70,7 +70,8 @@ export const ChatbotWindow: React.FC<ChatbotWindowProps> = ({
   // Khung popup đầy đủ
   return (
     <div
-      className="fixed bottom-22 right-3 sm:right-6 z-[1035] w-[calc(100vw-1.5rem)] sm:w-[390px] h-[550px] max-h-[82vh] bg-white rounded-2xl shadow-2xl border border-gray-200/90 flex flex-col overflow-hidden select-text animate-in fade-in slide-in-from-bottom-3 duration-200"
+      className="fixed bottom-22 right-3 sm:right-6 z-[1035] w-[calc(100vw-1.5rem)] sm:w-[390px] h-[550px] max-h-[82vh] bg-white text-slate-800 !text-slate-800 rounded-2xl shadow-2xl border border-gray-200/90 flex flex-col overflow-hidden select-text animate-in fade-in slide-in-from-bottom-3 duration-200"
+      style={{ color: '#1e293b' }}
       role="dialog"
       aria-label="Cửa sổ trò chuyện với Trợ lý Charles"
     >

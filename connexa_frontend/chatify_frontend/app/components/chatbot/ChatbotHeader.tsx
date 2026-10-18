@@ -105,7 +105,12 @@ export const ChatbotHeader: React.FC<ChatbotHeaderProps> = ({
               <i className="fa-classic fa-solid fa-rotate-right text-xs" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <h4 className="text-xs font-bold text-gray-900 leading-tight">Làm mới cuộc trò chuyện?</h4>
+              <h4
+                className="text-xs font-bold text-slate-900 !text-slate-900 leading-tight"
+                style={{ color: '#0f172a' }}
+              >
+                Làm mới cuộc trò chuyện?
+              </h4>
               <p className="text-[11px] text-gray-500 mt-1 leading-snug">
                 Toàn bộ tin nhắn hiện tại sẽ được xóa và bắt đầu lại phiên mới.
               </p>

@@ -47,7 +47,10 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = React.memo(({
               className="w-full h-full object-cover"
             />
           </div>
-          <h4 className="text-sm font-bold text-gray-900 mb-1">
+          <h4
+            className="text-sm font-bold text-slate-900 !text-slate-900 mb-1"
+            style={{ color: '#0f172a' }}
+          >
             Chào mừng bạn đến với {BOT_METADATA.name}!
           </h4>
           <div className="text-xs text-gray-600 text-left bg-white p-3 rounded-xl border border-sky-100/80 shadow-xs mt-2">
