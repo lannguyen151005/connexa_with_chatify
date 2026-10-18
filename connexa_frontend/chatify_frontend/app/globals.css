@@ -36,3 +36,15 @@ body {
     border-radius: 15px !important;
   }
 }
+
+/* Khắc phục triệt để việc Bootstrap Reboot ép thẻ button có border-radius: 0 */
+button.rounded-none { border-radius: 0px !important; }
+button.rounded-xs { border-radius: 0.125rem !important; }
+button.rounded-sm { border-radius: 0.25rem !important; }
+button.rounded { border-radius: 0.25rem !important; }
+button.rounded-md { border-radius: 0.375rem !important; }
+button.rounded-lg { border-radius: 0.5rem !important; }
+button.rounded-xl { border-radius: 0.75rem !important; }
+button.rounded-2xl { border-radius: 1rem !important; }
+button.rounded-3xl { border-radius: 1.5rem !important; }
+button.rounded-full { border-radius: 9999px !important; }

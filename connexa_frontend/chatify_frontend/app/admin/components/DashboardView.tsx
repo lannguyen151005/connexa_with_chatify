@@ -1,101 +1,154 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import api from '../../utils/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState, useCallback } from 'react';
+import { DashboardData } from './dashboard/types';
+import { fetchDashboardData, isDashboardMockEnabled } from './dashboard/dashboardService';
+import KpiCards from './dashboard/KpiCards';
+import ActivityChart from './dashboard/ActivityChart';
+import ContentDistribution from './dashboard/ContentDistribution';
+import AiMonitorCard from './dashboard/AiMonitorCard';
+import RecentReportsCard from './dashboard/RecentReportsCard';
+import { AdminMenuTab } from '../types';
 
-export default function DashboardView() {
-  const [stats, setStats] = useState({ totalUsers: 0, totalRooms: 0, totalMessagesToday: 0 });
-  const [chartData, setChartData] = useState([]);
-  const [isBotEnabled, setIsBotEnabled] = useState(true);
-  const [botTokens, setBotTokens] = useState(0);
+interface DashboardViewProps {
+  onNavigateTab?: (tab: AdminMenuTab) => void;
+}
+
+export default function DashboardView({ onNavigateTab }: DashboardViewProps) {
+  const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
     try {
-      const res = await api.get('/api/admin/dashboard');
-      setStats({ totalUsers: res.data.totalUsers, totalRooms: res.data.totalRooms, totalMessagesToday: res.data.totalMessagesToday });
-      setChartData(res.data.chartData);
-      setIsBotEnabled(res.data.isBotEnabled);
-      setBotTokens(res.data.botTokensUsed);
-    } catch (error) {
-      toast.error("Lỗi đồng bộ dữ liệu Dashboard");
+      const res = await fetchDashboardData();
+      setData(res);
+    } catch (err: any) {
+      console.error("Dashboard fetch error:", err);
+      // Khi không bật mock mà API lỗi: Báo lỗi thật, KHÔNG tự ý thay số liệu giả
+      setErrorMessage(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể kết nối đến Backend Quarkus (http://localhost:8080/api/admin/dashboard)."
+      );
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const handleToggleBot = async () => {
-    try {
-      const newState = !isBotEnabled;
-      await api.post('/api/admin/bot/toggle', { enabled: newState });
-      setIsBotEnabled(newState);
-      toast.success(newState ? "Đã BẬT Charles AI" : "Đã TẮT Charles AI");
-    } catch (error) {
-      toast.error("Lỗi khi đổi trạng thái Bot!");
+  useEffect(() => {
+    loadData();
+    // Tự động làm mới mỗi 30 giây nếu đang chạy
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, [loadData]);
+
+  const handleNavigateReports = () => {
+    if (onNavigateTab) {
+      onNavigateTab('REPORTS');
     }
   };
 
-  if (isLoading) return <div className="text-center mt-5"><div className="spinner-border text-primary"></div></div>;
+  // 1. TRẠNG THÁI LOADING
+  if (isLoading && !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-semibold text-slate-600">
+          Đang đồng bộ số liệu Dashboard...
+        </p>
+        <span className="text-xs text-slate-400 mt-1">
+          {isDashboardMockEnabled() ? "Đang tải dữ liệu mô phỏng..." : "Đang kết nối Backend Quarkus..."}
+        </span>
+      </div>
+    );
+  }
 
-  return (
-    <div className="fade-in">
-      <h3 className="fw-bold text-dark mb-4">Tổng quan Hệ thống</h3>
-      <div className="row g-4 mb-4">
-        <div className="col-12 col-md-3">
-          <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 border-start border-primary border-4">
-            <h6 className="text-muted fw-bold mb-2">TỔNG THÀNH VIÊN</h6>
-            <h2 className="fw-bold text-dark">{stats.totalUsers}</h2>
-          </div>
+  // 2. TRẠNG THÁI LỖI (KHI KHÔNG BẬT MOCK VÀ API LỖI)
+  if (errorMessage && !data) {
+    return (
+      <div className="bg-white rounded-3xl p-8 border border-rose-200 shadow-xs max-w-2xl mx-auto my-8 text-center">
+        <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
+          <i className="fas fa-triangle-exclamation"></i>
         </div>
-        <div className="col-12 col-md-3">
-          <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 border-start border-success border-4">
-            <h6 className="text-muted fw-bold mb-2">TỔNG PHÒNG CHAT</h6>
-            <h2 className="fw-bold text-dark">{stats.totalRooms}</h2>
-          </div>
-        </div>
-        <div className="col-12 col-md-3">
-          <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 border-start border-info border-4">
-            <h6 className="text-muted fw-bold mb-2">TIN NHẮN HÔM NAY</h6>
-            <h2 className="fw-bold text-dark">{stats.totalMessagesToday}</h2>
-          </div>
-        </div>
-        <div className="col-12 col-md-3">
-          <div className={`card border-0 shadow-sm p-4 rounded-4 h-100 border-start border-4 ${isBotEnabled ? 'border-warning' : 'border-secondary bg-light'}`}>
-            <div className="d-flex justify-content-between align-items-start">
-              <div>
-                <h6 className="text-muted fw-bold mb-2">TRỢ LÝ CHARLES</h6>
-                <div className="form-check form-switch fs-5">
-                  <input className="form-check-input" type="checkbox" role="switch" checked={isBotEnabled} onChange={handleToggleBot} style={{ cursor: 'pointer' }} />
-                </div>
-              </div>
-              <div className="text-end">
-                <small className="text-muted d-block">Token sử dụng</small>
-                <span className="badge bg-dark fs-6">{botTokens.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+        <h3 className="text-lg font-bold text-slate-800 mb-2">
+          Lỗi đồng bộ dữ liệu Dashboard
+        </h3>
+        <p className="text-xs text-slate-600 mb-4 leading-relaxed bg-rose-50 p-3 rounded-xl border border-rose-100 font-mono text-left">
+          {errorMessage}
+        </p>
+        <p className="text-xs text-slate-500 mb-6">
+          Chế độ Mock Data hiện đang <strong>TẮT</strong> (`NEXT_PUBLIC_ADMIN_DASHBOARD_MOCK=false`). Hệ thống không tự ý thay thế số liệu thật bằng số liệu giả.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={loadData}
+            className="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all cursor-pointer flex items-center gap-2"
+          >
+            <i className="fas fa-rotate-right"></i>
+            Thử lại kết nối
+          </button>
         </div>
       </div>
-      <div className="card border-0 shadow-sm rounded-4 p-4">
-        <h5 className="fw-bold text-dark mb-4"><i className="fas fa-chart-area me-2 text-primary"></i>Lưu lượng tin nhắn (7 ngày qua)</h5>
-        <div style={{ width: '100%', height: 350 }}>
-          <ResponsiveContainer>
-            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-              <XAxis dataKey="date" tick={{fill: '#6c757d'}} axisLine={false} tickLine={false} />
-              <YAxis tick={{fill: '#6c757d'}} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-              <Line type="monotone" dataKey="messages" stroke="#0d6efd" strokeWidth={3} dot={{ r: 4, fill: '#0d6efd', strokeWidth: 2 }} activeDot={{ r: 8 }} animationDuration={1500} />
-            </LineChart>
-          </ResponsiveContainer>
+    );
+  }
+
+  if (!data) return null;
+
+  return (
+    <div className="space-y-6 animate-fadeIn pb-8">
+      {/* THÔNG BÁO NGUỒN DỮ LIỆU / DEV MOCK BANNER */}
+      {data.isMock && (
+        <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3 text-amber-800">
+            <span className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 font-bold">
+              <i className="fas fa-vial"></i>
+            </span>
+            <div>
+              <p className="font-bold text-amber-900 leading-snug">
+                Chế độ Dữ liệu Mô phỏng (Dev Mock Mode)
+              </p>
+              <p className="text-amber-700 text-[11px] mt-0.5">
+                Các chỉ số mang nhãn <span className="font-bold">[Demo]</span> phục vụ thiết kế UI khi Backend Quarkus chưa chạy.
+              </p>
+            </div>
+          </div>
+          <span className="font-mono text-[11px] bg-amber-100 text-amber-900 px-3 py-1 rounded-lg shrink-0 self-start sm:self-auto border border-amber-200">
+            NEXT_PUBLIC_ADMIN_DASHBOARD_MOCK=true
+          </span>
+        </div>
+      )}
+
+      {/* KHỐI 1: 4 THẺ KPI CHÍNH */}
+      <KpiCards
+        stats={data.stats}
+        isMock={data.isMock}
+        onNavigateReports={handleNavigateReports}
+      />
+
+      {/* KHỐI 2: BIỂU ĐỒ HOẠT ĐỘNG (8/12) & PHÂN BỔ NỘI DUNG (4/12) */}
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 lg:col-span-8">
+          <ActivityChart data={data.chartData} isMock={data.isMock} />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <ContentDistribution items={data.contentDistribution} isMock={data.isMock} />
+        </div>
+      </div>
+
+      {/* KHỐI 3: TRỢ LÝ AI CHARLES (6/12) & BÁO CÁO VI PHẠM KHẨN CẤP (6/12) */}
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 lg:col-span-6">
+          <AiMonitorCard data={data.aiMonitor} isMock={data.isMock} />
+        </div>
+        <div className="col-span-12 lg:col-span-6">
+          <RecentReportsCard
+            reports={data.recentReports}
+            isMock={data.isMock}
+            onNavigateReports={handleNavigateReports}
+          />
         </div>
       </div>
     </div>

@@ -2,93 +2,266 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { AdminMenuTab, AdminProfile } from '../types';
 
 interface SidebarProps {
-  activeMenu: 'DASHBOARD' | 'USERS' | 'ROOMS';
-  setActiveMenu: (menu: 'DASHBOARD' | 'USERS' | 'ROOMS') => void;
-  adminProfile: { username: string; avatar_url: string };
+  activeMenu: AdminMenuTab;
+  setActiveMenu: (menu: AdminMenuTab) => void;
+  adminProfile: AdminProfile;
   onLogout: () => void;
-  // Thêm 2 props này để quản lý trạng thái Mobile
   isOpen: boolean;       
   closeSidebar: () => void;
+  pendingReportsCount?: number;
 }
 
-export default function Sidebar({ activeMenu, setActiveMenu, adminProfile, onLogout, isOpen, closeSidebar }: SidebarProps) {
+export default function Sidebar({
+  activeMenu,
+  setActiveMenu,
+  adminProfile,
+  onLogout,
+  isOpen,
+  closeSidebar,
+  pendingReportsCount = 3,
+}: SidebarProps) {
   const router = useRouter();
 
-  // Khi bấm chọn menu trên mobile thì tự động đóng thanh sidebar lại
-  const handleMenuClick = (menu: 'DASHBOARD' | 'USERS' | 'ROOMS') => {
+  const handleMenuClick = (menu: AdminMenuTab) => {
     setActiveMenu(menu);
-    closeSidebar(); 
+    closeSidebar();
+  };
+
+  const navItemClass = (menu: AdminMenuTab) => {
+    const isActive = activeMenu === menu;
+    return `w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
+      isActive
+        ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30"
+        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+    }`;
+  };
+
+  const iconClass = (iconName: string, menu: AdminMenuTab) => {
+    const isActive = activeMenu === menu;
+    return `fas ${iconName} w-5 text-center mr-3 text-base ${
+      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+    }`;
   };
 
   return (
-    <div className={`d-flex flex-column flex-shrink-0 p-3 bg-white shadow-sm z-3 custom-sidebar ${isOpen ? 'open' : ''}`} style={{ width: '280px' }}>
-      
-      {/* Brand & Nút Đóng (Chỉ hiện trên Mobile) */}
-      <div className="d-flex align-items-center justify-content-between mb-2 px-2">
-        <a href="#" className="d-flex align-items-center link-dark text-decoration-none">
-          <div className="rounded p-2 ms-3 me-4 d-flex align-items-center justify-content-center" style={{ width: '35px', height: '35px'}}>
-            <img src="/logo.png" alt="logo" className='rounded-circle' style={{width: "70px", height: "70px", objectFit: "cover", imageRendering: "auto"}}/>
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 md:hidden transition-opacity"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 h-full transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        {/* Top Section */}
+        <div className="flex flex-col h-full overflow-hidden">
+          {/* Brand Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center p-1 border border-blue-100 shadow-xs">
+                <img
+                  src="/logo.png"
+                  alt="Connexa Logo"
+                  className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    // Fallback nếu logo.png chưa có
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              </div>
+              <div>
+                <span className="text-base font-extrabold tracking-tight text-slate-800 block leading-tight">
+                  CONNEXA
+                </span>
+                <span className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider block">
+                  Admin Workspace
+                </span>
+              </div>
+            </div>
+
+            {/* Close Button on Mobile */}
+            <button
+              onClick={closeSidebar}
+              className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Đóng menu"
+            >
+              <i className="fas fa-xmark text-lg"></i>
+            </button>
           </div>
-          <span className="fs-5 fw-bold text-primary">Xin chào, <br></br>Admin!</span>
-        </a>
-        <button className="btn btn-light d-md-none border-0" onClick={closeSidebar}>
-          <i className="fas fa-times fs-5 text-secondary"></i>
-        </button>
-      </div>
-      <hr className="mt-0" />
 
-      {/* Thông tin Admin */}
-      <div className="d-flex align-items-center p-2 mb-3 rounded border bg-light">
-        <img src={adminProfile.avatar_url} alt="Admin" width="45" height="45" className="rounded-circle shadow-sm bg-white" />
-        <div className="ms-3 overflow-hidden">
-          <h6 className="mb-0 fw-bold text-truncate">{adminProfile.username}</h6>
-          <small className="text-success"><i className="fas fa-circle me-1" style={{fontSize: "8px"}}></i>Đang hoạt động</small>
+          {/* Admin Profile Card */}
+          <div className="p-4 mx-3 my-3 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-3">
+            <div className="relative shrink-0">
+              <img
+                src={adminProfile.avatar_url || "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3-bg.webp"}
+                alt={adminProfile.username}
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/30"
+              />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-slate-800 truncate leading-snug">
+                  {adminProfile.username}
+                </h4>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span className="text-[11px] font-medium text-emerald-600 truncate">Quản trị viên</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Menu (Scrollable) */}
+          <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-5">
+            {/* Group 1: TỔNG QUAN */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+                Tổng quan
+              </p>
+              <ul className="space-y-1">
+                <li>
+                  <button
+                    onClick={() => handleMenuClick('DASHBOARD')}
+                    className={navItemClass('DASHBOARD')}
+                  >
+                    <span className="flex items-center">
+                      <i className={iconClass('fa-chart-pie', 'DASHBOARD')}></i>
+                      <span>Dashboard Thống kê</span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Group 2: MẠNG XÃ HỘI (CONNEXA) */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+                Mạng xã hội (Connexa)
+              </p>
+              <ul className="space-y-1">
+                <li>
+                  <button
+                    onClick={() => handleMenuClick('POSTS')}
+                    className={navItemClass('POSTS')}
+                  >
+                    <span className="flex items-center">
+                      <i className={iconClass('fa-newspaper', 'POSTS')}></i>
+                      <span>Quản lý Bài viết</span>
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleMenuClick('REPORTS')}
+                    className={navItemClass('REPORTS')}
+                  >
+                    <span className="flex items-center">
+                      <i className={iconClass('fa-shield-halved', 'REPORTS')}></i>
+                      <span>Xử lý Báo cáo</span>
+                    </span>
+                    {pendingReportsCount > 0 && (
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        activeMenu === 'REPORTS'
+                          ? 'bg-white text-blue-600'
+                          : 'bg-rose-500 text-white'
+                      }`}>
+                        {pendingReportsCount}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Group 3: NHẮN TIN (CHATIFY) */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+                Nhắn tin (Chatify)
+              </p>
+              <ul className="space-y-1">
+                <li>
+                  <button
+                    onClick={() => handleMenuClick('ROOMS')}
+                    className={navItemClass('ROOMS')}
+                  >
+                    <span className="flex items-center">
+                      <i className={iconClass('fa-comments', 'ROOMS')}></i>
+                      <span>Hội thoại & Nhóm</span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Group 4: TÀI KHOẢN & HỆ THỐNG */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+                Tài khoản & Hệ thống
+              </p>
+              <ul className="space-y-1">
+                <li>
+                  <button
+                    onClick={() => handleMenuClick('USERS')}
+                    className={navItemClass('USERS')}
+                  >
+                    <span className="flex items-center">
+                      <i className={iconClass('fa-users-gear', 'USERS')}></i>
+                      <span>Quản lý Người dùng</span>
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleMenuClick('AI_SETTINGS')}
+                    className={navItemClass('AI_SETTINGS')}
+                  >
+                    <span className="flex items-center">
+                      <i className={iconClass('fa-robot', 'AI_SETTINGS')}></i>
+                      <span>Trợ lý AI & Cấu hình</span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </nav>
+
+          {/* Footer Actions */}
+          <div className="p-3 border-t border-slate-100 bg-white space-y-1.5">
+            <button
+              onClick={() => router.push('/')}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-xl transition-all cursor-pointer"
+            >
+              <i className="fas fa-house w-5 text-center text-slate-400"></i>
+              <span>Về Trang chủ Connexa</span>
+            </button>
+
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center gap-3 px-3.5 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+            >
+              <i className="fas fa-arrow-right-from-bracket w-5 text-center text-rose-500"></i>
+              <span>Đăng xuất</span>
+            </button>
+
+            <div className="pt-2 text-center">
+              <span className="text-[11px] text-slate-400 block font-mono">
+                Connexa v1.0 • Admin Workspace
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Menu Điều hướng */}
-      <ul className="nav nav-pills flex-column mb-auto fs-6 fw-medium">
-        <li className="nav-item mb-1">
-          <button 
-            className={`nav-link w-100 text-start px-3 py-2 ${activeMenu === 'DASHBOARD' ? 'text-primary fw-bold shadow-sm' : 'text-dark'}`}
-            style={{ backgroundColor: activeMenu === 'DASHBOARD' ? '#d6f0f4' : 'transparent', transition: 'all 0.2s' }}
-            onClick={() => handleMenuClick('DASHBOARD')}
-          >
-            <i className="fas fa-chart-pie me-3 w-20px text-center"></i> Dashboard
-          </button>
-        </li>
-        <li className="nav-item mb-1">
-          <button 
-            className={`nav-link w-100 text-start px-3 py-2 ${activeMenu === 'USERS' ? 'text-primary fw-bold shadow-sm' : 'text-dark'}`}
-            style={{ backgroundColor: activeMenu === 'USERS' ? '#d6f0f4' : 'transparent', transition: 'all 0.2s' }}
-            onClick={() => handleMenuClick('USERS')}
-          >
-            <i className="fas fa-users me-3 w-20px text-center"></i> Quản lý User
-          </button>
-        </li>
-        <li className="nav-item mb-1">
-          <button 
-            className={`nav-link w-100 text-start px-3 py-2 ${activeMenu === 'ROOMS' ? 'text-primary fw-bold shadow-sm' : 'text-dark'}`}
-            style={{ backgroundColor: activeMenu === 'ROOMS' ? '#d6f0f4' : 'transparent', transition: 'all 0.2s' }}
-            onClick={() => handleMenuClick('ROOMS')}
-          >
-            <i className="fas fa-comments me-3 w-20px text-center"></i> Quản lý Phòng
-          </button>
-        </li>
-      </ul>
-      <hr />
-      
-      {/* Nút Về App & Đăng xuất */}
-      <div className="d-flex flex-column gap-2">
-        <button className="btn btn-outline-primary text-start" onClick={() => router.push('/')}>
-          <i className="fas fa-paper-plane me-2"></i> Trở về App Chat
-        </button>
-        <button className="btn btn-danger text-start shadow-sm" onClick={onLogout}>
-          <i className="fas fa-sign-out-alt me-2"></i> Đăng xuất
-        </button>
-      </div>
-    </div>
+      </aside>
+    </>
   );
 }
