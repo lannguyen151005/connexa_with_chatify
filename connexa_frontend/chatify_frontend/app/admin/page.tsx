@@ -9,9 +9,9 @@ import UserManageView from './components/users/UserManageView';
 import RoomManageView from './components/rooms/RoomManageView';
 import Sidebar from './components/Sidebar';
 import AdminHeader from './components/AdminHeader';
-import ModulePlaceholderView from './components/ModulePlaceholderView';
 import PostManageView from './components/posts/PostManageView';
 import ReportManageView from './components/reports/ReportManageView';
+import AiSettingsView from './components/ai-settings/AiSettingsView';
 import { AdminMenuTab, AdminProfile } from './types';
 
 export default function AdminWorkspace() {
@@ -118,12 +118,7 @@ export default function AdminWorkspace() {
 
             {activeMenu === 'ROOMS' && <RoomManageView />}
 
-            {activeMenu === 'AI_SETTINGS' && (
-              <ModulePlaceholderView
-                tab="AI_SETTINGS"
-                onNavigateDashboard={() => setActiveMenu('DASHBOARD')}
-              />
-            )}
+            {activeMenu === 'AI_SETTINGS' && <AiSettingsView />}
           </div>
         </main>
       </div>
