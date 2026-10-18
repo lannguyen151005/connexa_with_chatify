@@ -77,7 +77,7 @@ public class PostRepo implements PanacheRepositoryBase<Post, UUID> {
                           )
                       )
                   )
-                order by p.createdAt desc, p.id desc
+                order by p.isPinned desc, p.createdAt desc, p.id desc
                 """,
                 Map.of(
                         "publicPrivacy", PostPrivacy.PUBLIC,
@@ -271,4 +271,13 @@ public class PostRepo implements PanacheRepositoryBase<Post, UUID> {
                         "acceptedStatus", FriendRequestStatus.ACCEPTED))
                 .page(page);
     }
-}
+
+    public PanacheQuery<Post> findAdminPosts(Page page) {
+        return find("""
+                select p
+                from Post p
+                where p.isDeleted = false
+                order by p.isPinned desc, p.createdAt desc, p.id desc
+                """).page(page);
+    }
+}

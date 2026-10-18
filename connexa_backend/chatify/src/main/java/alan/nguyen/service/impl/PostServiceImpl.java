@@ -171,4 +171,33 @@ public class PostServiceImpl implements PostService {
         // Giảm usage_count và gỡ liên kết hashtag
         hashtagService.removePostHashtags(post.getId());
     }
+
+    @Override
+    @Transactional
+    public PostResponseDTO setPinPost(UUID postId, boolean isPinned) {
+        Post post = postRepo.findActiveByIdWithDetails(postId)
+                .orElseThrow(() -> new NotFoundException("Bài viết không tồn tại hoặc đã bị xóa"));
+
+        post.setPinned(isPinned);
+        postRepo.persist(post);
+
+        List<String> hashtags = hashtagService.getHashtagNamesByPostId(postId);
+        return PostResponseDTO.fromEntity(post, hashtags);
+    }
+
+    @Override
+    public PageResponseDTO<PostResponseDTO> getAdminPosts(int page, int size) {
+        int pageIndex = Math.max(0, page);
+        int pageSize = Math.min(Math.max(1, size), 50);
+
+        Page pageable = Page.of(pageIndex, pageSize);
+        PanacheQuery<Post> query = postRepo.findAdminPosts(pageable);
+
+        List<PostResponseDTO> items = query.list().stream()
+                .map(p -> PostResponseDTO.fromEntity(p, hashtagService.getHashtagNamesByPostId(p.getId())))
+                .toList();
+
+        return PageResponseDTO.of(items, query.page().index, query.page().size, query.count(), query.pageCount());
+    }
 }
+

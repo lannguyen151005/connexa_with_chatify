@@ -43,4 +43,17 @@ public class User{
     @Column(name = "birthday")
     private LocalDate birthday;
 
+    @Column(name = "is_locked", nullable = false)
+    private boolean is_locked = false;
+
+    @Column(name = "lock_until")
+    private LocalDateTime lock_until;
+
+    @Column(name = "lock_reason")
+    private String lock_reason;
+
+    public boolean is_locked() {
+        return this.is_locked;
+    }
+
 }

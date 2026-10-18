@@ -51,6 +51,9 @@ erDiagram
 | `is_online` | `BOOLEAN` | `NOT NULL, DEFAULT FALSE` | Trạng thái online |
 | `last_seen` | `TIMESTAMP` | `NULL` | Thời điểm online gần nhất |
 | `created_at` | `TIMESTAMP` | `NOT NULL, DEFAULT CURRENT_TIMESTAMP` | Thời điểm tạo tài khoản |
+| `is_locked` | `BOOLEAN` | `NOT NULL, DEFAULT FALSE` | Trạng thái tài khoản bị khóa (Mức 1) |
+| `lock_until` | `TIMESTAMP` | `NULL` | Thời điểm hết hạn khóa tạm thời (NULL nếu khóa vĩnh viễn/chưa khóa) |
+| `lock_reason`| `TEXT` | `NULL` | Lý do khóa tài khoản |
 
 ---
 
@@ -65,6 +68,7 @@ Lưu trữ thông tin cốt lõi của bài viết do người dùng đăng tả
 | `privacy` | `VARCHAR(20)` | `NOT NULL, DEFAULT 'PUBLIC'` | Mức quyền: `PUBLIC`, `FRIENDS_ONLY`, `PRIVATE` |
 | `like_count` | `INTEGER` | `NOT NULL, DEFAULT 0` | Số lượt like/reaction |
 | `comment_count`| `INTEGER` | `NOT NULL, DEFAULT 0` | Số bình luận |
+| `is_pinned` | `BOOLEAN` | `NOT NULL, DEFAULT FALSE` | Đánh dấu bài viết được Admin ghim lên đầu Feed |
 | `is_edited` | `BOOLEAN` | `NOT NULL, DEFAULT FALSE` | Đánh dấu bài viết đã chỉnh sửa |
 | `is_deleted` | `BOOLEAN` | `NOT NULL, DEFAULT FALSE` | Cờ xóa mềm (Soft Delete) |
 | `created_at` | `TIMESTAMP` | `NOT NULL, DEFAULT CURRENT_TIMESTAMP` | Thời điểm đăng bài |

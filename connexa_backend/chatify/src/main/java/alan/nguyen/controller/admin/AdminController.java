@@ -1,17 +1,28 @@
 package alan.nguyen.controller.admin;
 
+import alan.nguyen.common.ApiResponse;
+import alan.nguyen.dto.PageResponseDTO;
+import alan.nguyen.dto.admin.LockUserRequestDTO;
+import alan.nguyen.dto.admin.PinPostRequestDTO;
+import alan.nguyen.dto.connexa.post.PostResponseDTO;
+import alan.nguyen.repository.PostCommentRepo;
+import alan.nguyen.repository.PostReactionRepo;
+import alan.nguyen.repository.PostRepo;
 import alan.nguyen.service.ConversationService;
-import alan.nguyen.service.UserService;
 import alan.nguyen.service.MessageService;
+import alan.nguyen.service.PostService;
+import alan.nguyen.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +45,21 @@ public class AdminController {
     ConversationService conversationService;
 
     @Inject
+    PostService postService;
+
+    @Inject
+    PostRepo postRepo;
+
+    @Inject
+    PostCommentRepo postCommentRepo;
+
+    @Inject
+    PostReactionRepo postReactionRepo;
+
+    @Inject
+    JsonWebToken jwt;
+
+    @Inject
     ObjectMapper objectMapper;
 
     // Biến tạm lưu trạng thái Bot (Trong thực tế nên lưu vào Database bảng `SystemConfig`)
@@ -52,6 +78,15 @@ public class AdminController {
         response.put("totalUsers", userService.countAllUsers());
         response.put("totalRooms", conversationService.countAllConversations());
         response.put("totalMessagesToday", messageService.countMessagesToday());
+
+        // Chỉ số Dashboard Mức 1: bài viết và tương tác chưa bị xóa mềm
+        long totalPosts = postRepo.count("isDeleted = false");
+        long activeComments = postCommentRepo.count("isDeleted = false and post.isDeleted = false");
+        long activeReactions = postReactionRepo.count("post.isDeleted = false");
+        long totalInteractions = activeComments + activeReactions;
+
+        response.put("totalPosts", totalPosts);
+        response.put("totalInteractions", totalInteractions);
 
         response.put("isBotEnabled", isCharlesEnabled);
         response.put("botTokensUsed", charlesTokensUsed);
@@ -96,6 +131,35 @@ public class AdminController {
     public Response deleteUserByAdmin(@PathParam("id") UUID userId) {
         userService.anonymizeUser(userId);
         return Response.ok("Đã xóa người dùng thành công").build();
+    }
+
+    @PATCH
+    @Path("/users/{id}/lock")
+    public Response lockUser(@PathParam("id") UUID userId, @Valid @NotNull LockUserRequestDTO dto) {
+        UUID adminId = UUID.fromString(jwt.getSubject());
+        return userService.lockUser(userId, dto, adminId);
+    }
+
+    @PATCH
+    @Path("/users/{id}/unlock")
+    public Response unlockUser(@PathParam("id") UUID userId) {
+        return userService.unlockUser(userId);
+    }
+
+    @GET
+    @Path("/posts")
+    public Response getAdminPosts(@QueryParam("page") @DefaultValue("0") int page,
+                                  @QueryParam("size") @DefaultValue("10") int size) {
+        PageResponseDTO<PostResponseDTO> result = postService.getAdminPosts(page, size);
+        return Response.ok(ApiResponse.success("Lấy danh sách bài viết quản trị thành công", result)).build();
+    }
+
+    @PATCH
+    @Path("/posts/{id}/pin")
+    public Response pinPost(@PathParam("id") UUID postId, @Valid @NotNull PinPostRequestDTO dto) {
+        PostResponseDTO post = postService.setPinPost(postId, dto.getIsPinned());
+        String msg = Boolean.TRUE.equals(dto.getIsPinned()) ? "Ghim bài viết thành công" : "Bỏ ghim bài viết thành công";
+        return Response.ok(ApiResponse.success(msg, post)).build();
     }
 
     @GET

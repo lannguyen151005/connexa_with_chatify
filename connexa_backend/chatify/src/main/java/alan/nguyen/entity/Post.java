@@ -50,6 +50,10 @@ public class Post {
     @Builder.Default
     private boolean isDeleted = false;
 
+    @Column(name = "is_pinned", nullable = false)
+    @Builder.Default
+    private boolean isPinned = false;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<PostMedia> mediaList = new ArrayList<>();
@@ -78,6 +82,14 @@ public class Post {
 
     public void set_deleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public boolean is_pinned() {
+        return this.isPinned;
+    }
+
+    public void set_pinned(boolean isPinned) {
+        this.isPinned = isPinned;
     }
 
     public LocalDateTime getCreated_at() {

@@ -502,3 +502,96 @@ Tài liệu đặc tả các giao diện lập trình ứng dụng (RESTful API)
     ]
   }
   ```
+
+---
+
+## 9. Danh mục API Quản Trị Hệ Thống (Admin Endpoints - Mức 1)
+
+Yêu cầu người dùng đăng nhập với vai trò `ADMIN` (`@RolesAllowed("ADMIN")`). Header: `Authorization: Bearer <token>`.
+
+### 9.1. Ghim / Bỏ ghim bài viết (Pin/Unpin Post)
+- **Endpoint**: `PATCH /api/admin/posts/{id}/pin`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Body**:
+  ```json
+  {
+    "isPinned": true
+  }
+  ```
+  *(Để bỏ ghim: gửi `"isPinned": false`)*
+- **Response Success (200 OK)**: Trả về `ApiResponse<PostResponseDTO>` với trường `is_pinned` tương ứng.
+- **Ràng buộc**: Bài viết bị xóa mềm hoặc không tồn tại sẽ trả về `404 Not Found`. Khi bài viết được ghim, `GET /api/v1/posts/feed` sẽ ưu tiên đưa lên đầu nhưng vẫn giữ nguyên đầy đủ quy tắc quyền riêng tư (PUBLIC, FRIENDS_ONLY, PRIVATE).
+
+---
+
+### 9.2. Danh sách bài viết quản trị (Get Admin Posts)
+- **Endpoint**: `GET /api/admin/posts`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Query Parameters**:
+  - `page` (int, default: 0)
+  - `size` (int, default: 10, max: 50)
+- **Response Success (200 OK)**: Cấu trúc phân trang `PageResponseDTO<PostResponseDTO>` liệt kê tất cả bài viết chưa bị xóa mềm, sắp xếp theo `isPinned DESC, createdAt DESC`.
+
+---
+
+### 9.3. Khóa tài khoản người dùng (Lock User)
+- **Endpoint**: `PATCH /api/admin/users/{id}/lock`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Body - Khóa tạm thời**:
+  ```json
+  {
+    "type": "TEMPORARY",
+    "durationDays": 7,
+    "reason": "Spam nội dung vi phạm"
+  }
+  ```
+  *(Thời hạn `durationDays` hợp lệ: `3`, `7`, hoặc `30` ngày. Các giá trị khác trả về `400 Bad Request`)*
+- **Request Body - Khóa vĩnh viễn**:
+  ```json
+  {
+    "type": "PERMANENT",
+    "reason": "Lừa đảo chiếm đoạt tài sản"
+  }
+  ```
+- **Quy tắc bảo mật & phân quyền**:
+  - Không được phép khóa tài khoản Quản trị viên (`ADMIN`), vi phạm trả về `400 Bad Request`.
+  - Tài khoản bị khóa khi đăng nhập sẽ nhận phản hồi `403 Forbidden` kèm thông báo lý do và thời gian khóa.
+  - Tài khoản khóa tạm thời tự động mở khóa khi đã quá thời điểm `lock_until`.
+
+---
+
+### 9.4. Mở khóa tài khoản người dùng (Unlock User)
+- **Endpoint**: `PATCH /api/admin/users/{id}/unlock`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "message": "Mở khóa tài khoản thành công"
+  }
+  ```
+
+---
+
+### 9.5. Chỉ số Dashboard Tổng Quan (Get Dashboard Metrics)
+- **Endpoint**: `GET /api/admin/dashboard`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "totalUsers": 150,
+    "totalRooms": 24,
+    "totalMessagesToday": 320,
+    "totalPosts": 85,
+    "totalInteractions": 412,
+    "isBotEnabled": true,
+    "botTokensUsed": 15420,
+    "chartData": [
+      {
+        "date": "12/10",
+        "messages": 120
+      }
+    ]
+  }
+  ```
+  *(Lưu ý: `totalPosts` đếm toàn bộ bài viết chưa bị xóa mềm `isDeleted = false`. `totalInteractions` đếm tổng số bình luận hợp lệ + reaction hợp lệ trên các bài viết chưa bị xóa mềm)*
+

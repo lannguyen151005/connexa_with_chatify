@@ -38,4 +38,15 @@ public interface PostService {
      * Xóa mềm bài viết (Chỉ tác giả hoặc ADMIN)
      */
     void deletePost(UUID currentUserId, UUID postId);
+
+    /**
+     * Ghim hoặc bỏ ghim bài viết (Dành cho Admin)
+     */
+    PostResponseDTO setPinPost(UUID postId, boolean isPinned);
+
+    /**
+     * Lấy danh sách bài viết dành cho Admin quản lý/kiểm duyệt
+     */
+    PageResponseDTO<PostResponseDTO> getAdminPosts(int page, int size);
 }
+

@@ -27,11 +27,24 @@ public class PostResponseDTO {
     private int comment_count;
     private boolean is_liked;
     private boolean is_edited;
+    private boolean is_pinned;
     private List<PostMediaDTO> media_list;
     @Builder.Default
     private List<String> hashtags = Collections.emptyList();
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+
+    public boolean is_pinned() {
+        return this.is_pinned;
+    }
+
+    public boolean isPinned() {
+        return this.is_pinned;
+    }
+
+    public boolean getIsPinned() {
+        return this.is_pinned;
+    }
 
     public static PostResponseDTO fromEntity(Post post) {
         return fromEntity(post, Collections.emptyList());
@@ -70,6 +83,7 @@ public class PostResponseDTO {
                 .comment_count(post.getComment_count())
                 .is_liked(false) // Mặc định false, giai đoạn 2 sẽ kiểm tra user hiện tại đã like chưa
                 .is_edited(post.is_edited())
+                .is_pinned(post.isPinned())
                 .media_list(mediaList != null ? mediaList : Collections.emptyList())
                 .hashtags(hashtags != null ? hashtags : Collections.emptyList())
                 .created_at(post.getCreated_at())
