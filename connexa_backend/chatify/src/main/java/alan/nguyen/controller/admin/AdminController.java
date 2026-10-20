@@ -1,16 +1,19 @@
 package alan.nguyen.controller.admin;
 
 import alan.nguyen.common.ApiResponse;
+import alan.nguyen.common.ReportStatus;
+import alan.nguyen.common.ReportTargetType;
 import alan.nguyen.dto.PageResponseDTO;
-import alan.nguyen.dto.admin.LockUserRequestDTO;
-import alan.nguyen.dto.admin.PinPostRequestDTO;
+import alan.nguyen.dto.admin.*;
 import alan.nguyen.dto.connexa.post.PostResponseDTO;
 import alan.nguyen.repository.PostCommentRepo;
 import alan.nguyen.repository.PostReactionRepo;
 import alan.nguyen.repository.PostRepo;
+import alan.nguyen.repository.ReportRepo;
 import alan.nguyen.service.ConversationService;
 import alan.nguyen.service.MessageService;
 import alan.nguyen.service.PostService;
+import alan.nguyen.service.ReportService;
 import alan.nguyen.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -48,6 +51,9 @@ public class AdminController {
     PostService postService;
 
     @Inject
+    ReportService reportService;
+
+    @Inject
     PostRepo postRepo;
 
     @Inject
@@ -55,6 +61,9 @@ public class AdminController {
 
     @Inject
     PostReactionRepo postReactionRepo;
+
+    @Inject
+    ReportRepo reportRepo;
 
     @Inject
     JsonWebToken jwt;
@@ -87,6 +96,10 @@ public class AdminController {
 
         response.put("totalPosts", totalPosts);
         response.put("totalInteractions", totalInteractions);
+
+        // Chỉ số Dashboard Mức 2: số đơn báo cáo đang chờ xử lý
+        long pendingReports = reportRepo.count("status = ?1", ReportStatus.PENDING);
+        response.put("pendingReports", pendingReports);
 
         response.put("isBotEnabled", isCharlesEnabled);
         response.put("botTokensUsed", charlesTokensUsed);
@@ -160,6 +173,40 @@ public class AdminController {
         PostResponseDTO post = postService.setPinPost(postId, dto.getIsPinned());
         String msg = Boolean.TRUE.equals(dto.getIsPinned()) ? "Ghim bài viết thành công" : "Bỏ ghim bài viết thành công";
         return Response.ok(ApiResponse.success(msg, post)).build();
+    }
+
+    @GET
+    @Path("/reports")
+    public Response getAdminReports(
+            @QueryParam("status") ReportStatus status,
+            @QueryParam("targetType") ReportTargetType targetType,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size
+    ) {
+        PageResponseDTO<AdminReportResponseDTO> result = reportService.getAdminReports(status, targetType, page, size);
+        return Response.ok(ApiResponse.success("Lấy danh sách báo cáo vi phạm thành công", result)).build();
+    }
+
+    @POST
+    @Path("/reports/{id}/resolve")
+    public Response resolveReport(
+            @PathParam("id") UUID reportId,
+            @Valid @NotNull ResolveReportRequestDTO dto
+    ) {
+        UUID adminId = UUID.fromString(jwt.getSubject());
+        reportService.resolveReport(adminId, reportId, dto);
+        return Response.ok(ApiResponse.success("Đã giải quyết báo cáo vi phạm thành công", null)).build();
+    }
+
+    @POST
+    @Path("/reports/{id}/dismiss")
+    public Response dismissReport(
+            @PathParam("id") UUID reportId,
+            DismissReportRequestDTO dto
+    ) {
+        UUID adminId = UUID.fromString(jwt.getSubject());
+        reportService.dismissReport(adminId, reportId, dto);
+        return Response.ok(ApiResponse.success("Đã bác bỏ báo cáo", null)).build();
     }
 
     @GET

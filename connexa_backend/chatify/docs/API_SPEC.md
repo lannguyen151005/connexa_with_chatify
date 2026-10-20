@@ -583,6 +583,7 @@ Yêu cầu người dùng đăng nhập với vai trò `ADMIN` (`@RolesAllowed("
     "totalMessagesToday": 320,
     "totalPosts": 85,
     "totalInteractions": 412,
+    "pendingReports": 5,
     "isBotEnabled": true,
     "botTokensUsed": 15420,
     "chartData": [
@@ -593,5 +594,154 @@ Yêu cầu người dùng đăng nhập với vai trò `ADMIN` (`@RolesAllowed("
     ]
   }
   ```
-  *(Lưu ý: `totalPosts` đếm toàn bộ bài viết chưa bị xóa mềm `isDeleted = false`. `totalInteractions` đếm tổng số bình luận hợp lệ + reaction hợp lệ trên các bài viết chưa bị xóa mềm)*
+  *(Lưu ý: `totalPosts` đếm toàn bộ bài viết chưa bị xóa mềm `isDeleted = false`. `totalInteractions` đếm tổng số bình luận hợp lệ + reaction hợp lệ trên các bài viết chưa bị xóa mềm. `pendingReports` đếm số lượng đơn báo cáo đang chờ xử lý `status = 'PENDING'`)*
+
+---
+
+## 10. Quản Lý Báo Cáo Vi Phạm & Kiểm Duyệt (Reports & Moderation - Mức 2)
+
+### 10.1. Người dùng gửi Báo cáo Vi phạm (Create Report)
+- **Endpoint**: `POST /api/v1/reports`
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+  ```json
+  {
+    "targetType": "POST",
+    "targetId": "c1f7b8a2-3e4d-4a1b-9f2c-1a2b3c4d5e6f",
+    "reason": "Phát tán liên kết lừa đảo mạo danh",
+    "details": "Tài khoản này chia sẻ bài viết quảng cáo cờ bạc lừa tiền sinh viên"
+  }
+  ```
+  - `targetType`: Bắt buộc, thuộc enum `POST`, `COMMENT`, `USER`.
+  - `targetId`: Bắt buộc, UUID của đối tượng bị báo cáo.
+  - `reason`: Bắt buộc, `@NotBlank`, tối đa 255 ký tự.
+  - `details`: Chi tiết bổ sung (tùy chọn).
+- **Quy tắc kiểm tra**:
+  - Không được tự báo cáo chính mình (`targetType = USER` và `targetId = reporterId`).
+  - Đối tượng bị báo cáo phải tồn tại và chưa bị xóa mềm trong hệ thống.
+  - **Chống spam**: 1 người không được gửi liên tiếp 2 báo cáo cho cùng 1 đối tượng khi đơn cũ còn ở trạng thái `PENDING`.
+- **Response Success (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Gửi báo cáo thành công",
+    "data": {
+      "id": "r-001",
+      "targetType": "POST",
+      "targetId": "c1f7b8a2-3e4d-4a1b-9f2c-1a2b3c4d5e6f",
+      "reason": "Phát tán liên kết lừa đảo mạo danh",
+      "details": "Tài khoản này chia sẻ bài viết quảng cáo cờ bạc lừa tiền sinh viên",
+      "status": "PENDING",
+      "createdAt": "2026-10-20T14:30:00"
+    }
+  }
+  ```
+
+---
+
+### 10.2. Admin lấy Danh sách Báo cáo Vi phạm (Get Admin Reports)
+- **Endpoint**: `GET /api/admin/reports`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Query Parameters**:
+  - `page` (int, default: 0): Số trang.
+  - `size` (int, default: 10, max: 50): Kích thước trang.
+  - `status` (String, optional): `PENDING`, `RESOLVED`, `DISMISSED` hoặc để trống (lấy tất cả).
+  - `targetType` (String, optional): `POST`, `COMMENT`, `USER` hoặc để trống.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lấy danh sách báo cáo vi phạm thành công",
+    "data": {
+      "items": [
+        {
+          "id": "rep-001",
+          "reporter": {
+            "id": "u-001",
+            "username": "hoanglong.dev",
+            "avatarUrl": "https://..."
+          },
+          "targetType": "POST",
+          "targetId": "p-001",
+          "targetPreview": {
+            "content": "Trích đoạn bài viết vi phạm...",
+            "author": {
+              "id": "u-bad",
+              "username": "hacker123",
+              "avatarUrl": null
+            }
+          },
+          "reason": "Nội dung phản cảm, kích động thù địch",
+          "details": "Bài viết chửi bới xúc phạm sinh viên khoa CNTT",
+          "status": "PENDING",
+          "actionTaken": null,
+          "resolutionNotes": null,
+          "resolvedBy": null,
+          "createdAt": "2026-10-20T14:30:00",
+          "resolvedAt": null
+        }
+      ],
+      "page": 0,
+      "size": 10,
+      "total_elements": 1,
+      "total_pages": 1,
+      "is_last": true
+    }
+  }
+  ```
+
+---
+
+### 10.3. Admin Giải quyết Báo cáo Vi phạm (Resolve Report)
+- **Endpoint**: `POST /api/admin/reports/{id}/resolve`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Body**:
+  ```json
+  {
+    "actionTaken": "REMOVE_CONTENT",
+    "resolutionNotes": "Đã xác minh nội dung vi phạm tiêu chuẩn cộng đồng, gỡ bài viết ngay."
+  }
+  ```
+  - `actionTaken`: Bắt buộc, thuộc enum `REMOVE_CONTENT`, `LOCK_USER`, `WARN_USER`, `NO_ACTION`.
+  - `resolutionNotes`: Ghi chú xử lý của Quản trị viên.
+- **Logic xử lý tự động của Backend**:
+  - Cập nhật Report: `status = RESOLVED`, `actionTaken`, `resolutionNotes`, `resolvedBy = adminId`, `resolvedAt = NOW()`.
+  - Nếu `actionTaken == REMOVE_CONTENT`:
+    - `targetType == POST`: Tự động gọi `postService.deletePost` (đánh dấu xóa mềm `is_deleted = true`).
+    - `targetType == COMMENT`: Đánh dấu bình luận `isDeleted = true`.
+  - Nếu `actionTaken == LOCK_USER`: Khóa tài khoản tác giả nội dung vi phạm thông qua cơ chế khóa người dùng.
+  - Nếu `actionTaken == WARN_USER`: Tạo thông báo hệ thống `SYSTEM_WARNING` gửi về cho người dùng vi phạm.
+  - Nếu `actionTaken == NO_ACTION`: Đóng đơn mà không áp dụng hình thức kỷ luật.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Đã giải quyết báo cáo vi phạm thành công",
+    "data": null
+  }
+  ```
+
+---
+
+### 10.4. Admin Bác bỏ Báo cáo Vi phạm (Dismiss Report)
+- **Endpoint**: `POST /api/admin/reports/{id}/dismiss`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Body**:
+  ```json
+  {
+    "resolutionNotes": "Nội dung thảo luận học thuật bình thường, không cấu thành hành vi vi phạm."
+  }
+  ```
+- **Logic xử lý**:
+  - Cập nhật Report: `status = DISMISSED`, `actionTaken = DISMISSED`, `resolutionNotes`, `resolvedBy = adminId`, `resolvedAt = NOW()`.
+  - Nội dung bài viết/bình luận và tài khoản bị báo cáo được giữ nguyên không thay đổi.
+- **Response Success (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Đã bác bỏ báo cáo",
+    "data": null
+  }
+  ```
+
 

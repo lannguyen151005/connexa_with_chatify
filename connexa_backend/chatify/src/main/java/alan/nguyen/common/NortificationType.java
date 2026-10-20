@@ -5,5 +5,6 @@ public enum NortificationType {
     COMMENT_POST,
     REPLY_POST,
     SHARE_POST,
-    FRIEND_REQUEST
+    FRIEND_REQUEST,
+    SYSTEM_WARNING
 }

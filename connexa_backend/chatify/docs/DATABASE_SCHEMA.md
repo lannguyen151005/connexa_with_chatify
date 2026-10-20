@@ -184,3 +184,29 @@ Lưu trữ các lượt tương tác cảm xúc (Like, Love, Haha, Wow, Sad, Ang
 
 **Ràng buộc & Chỉ mục:**
 - `uq_post_reactions_post_user`: Ràng buộc Unique cặp `(post_id, user_id)` (mỗi người dùng chỉ có 1 biểu cảm tại 1 thời điểm trên mỗi bài viết).
+
+---
+
+### 3.9. Bảng `reports` (Báo cáo vi phạm & Kiểm duyệt - Mức 2)
+Lưu trữ các đơn báo cáo nội dung hoặc người dùng vi phạm tiêu chuẩn cộng đồng, phục vụ trung tâm kiểm duyệt của Quản trị viên.
+
+| Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính duy nhất của báo cáo |
+| `reporter_id` | `UUID` | `NOT NULL, REFERENCES users(id) ON DELETE CASCADE` | ID người dùng gửi báo cáo |
+| `target_type` | `VARCHAR(20)` | `NOT NULL` | Loại đối tượng bị báo cáo: `POST`, `COMMENT`, `USER` |
+| `target_id` | `UUID` | `NOT NULL` | ID của đối tượng bị báo cáo |
+| `reason` | `VARCHAR(255)` | `NOT NULL` | Lý do báo cáo vi phạm |
+| `details` | `TEXT` | `NULL` | Mô tả chi tiết thêm từ người gửi |
+| `status` | `VARCHAR(20)` | `NOT NULL, DEFAULT 'PENDING'` | Trạng thái: `PENDING`, `RESOLVED`, `DISMISSED` |
+| `action_taken` | `VARCHAR(30)` | `NULL` | Biện pháp kỷ luật: `REMOVE_CONTENT`, `LOCK_USER`, `WARN_USER`, `DISMISSED`, `NO_ACTION` |
+| `resolutionNotes` | `TEXT` | `NULL` | Ghi chú xử lý của Quản trị viên |
+| `resolved_by` | `UUID` | `NULL, REFERENCES users(id) ON DELETE SET NULL` | ID Quản trị viên xử lý báo cáo |
+| `created_at` | `TIMESTAMP` | `NOT NULL, DEFAULT CURRENT_TIMESTAMP` | Thời điểm gửi báo cáo |
+| `resolved_at` | `TIMESTAMP` | `NULL` | Thời điểm hoàn tất giải quyết/bác bỏ |
+
+**Chỉ mục tối ưu:**
+- `idx_reports_status`: Index trên cột `status` (phục vụ lọc danh sách và đếm `pendingReports` trên Dashboard).
+- `idx_reports_target`: Composite Index trên `(target_type, target_id)`.
+- `idx_reports_created_at`: Index sắp xếp `created_at DESC` cho danh sách duyệt báo cáo.
+
