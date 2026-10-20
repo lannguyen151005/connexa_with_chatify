@@ -29,21 +29,35 @@ export const fetchAdminUsers = async (
   const rawList: any[] = Array.isArray(res.data) ? res.data : (res.data?.items || []);
 
   // Chuẩn hóa dữ liệu trả về từ Quarkus sang AdminUser
-  const mappedList: AdminUser[] = rawList.map((item) => ({
-    id: item.id || String(item.userId || Math.random()),
-    username: item.username || 'Unknown',
-    email: item.email || '',
-    avatarUrl: item.avatar_url || item.avatarUrl || null,
-    role: item.role === 'ADMIN' ? 'ADMIN' : 'USER',
-    status: item.username === 'Người dùng đã xóa' ? 'DELETED' : (item.status === 'LOCKED' ? 'LOCKED' : 'ACTIVE'),
-    createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-    metrics: {
-      postsCount: item.postsCount ?? (item.metrics?.postsCount || 0),
-      friendsCount: item.friendsCount ?? (item.metrics?.friendsCount || 0),
-      violationsCount: item.violationsCount ?? (item.metrics?.violationsCount || 0),
-    },
-    lockInfo: item.lockInfo || null,
-  }));
+  const mappedList: AdminUser[] = rawList.map((item) => {
+    const isLocked = Boolean(item.is_locked || item.isLocked || item.status === 'LOCKED');
+    const isDeleted = item.username === 'Người dùng đã xóa';
+    const status = isDeleted ? 'DELETED' : (isLocked ? 'LOCKED' : 'ACTIVE');
+
+    return {
+      id: item.id ? String(item.id) : String(item.userId || Math.random()),
+      username: item.username || 'Unknown',
+      email: item.email || '',
+      avatarUrl: item.avatar_url || item.avatarUrl || null,
+      role: item.role === 'ADMIN' ? 'ADMIN' : 'USER',
+      status,
+      createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+      metrics: {
+        postsCount: item.postsCount ?? (item.metrics?.postsCount || 0),
+        friendsCount: item.friendsCount ?? (item.metrics?.friendsCount || 0),
+        violationsCount: item.violationsCount ?? (item.metrics?.violationsCount || 0),
+      },
+      lockInfo: isLocked
+        ? {
+            isLocked: true,
+            reason: item.lock_reason || item.lockReason || 'Vi phạm chính sách cộng đồng',
+            lockedAt: item.locked_at || item.lockedAt || item.updated_at || new Date().toISOString(),
+            lockedUntil: item.lock_until || item.lockUntil || null,
+            lockedBy: item.locked_by || item.lockedBy || 'Hệ thống Quản trị',
+          }
+        : null,
+    };
+  });
 
   // Lọc và phân trang client-side dự phòng nếu Quarkus chưa hỗ trợ query param
   let filtered = [...mappedList];
@@ -88,7 +102,20 @@ export const lockUserApi = async (
     return mockLockUser(userId, payload.duration, payload.reason);
   }
 
-  const res = await api.patch(`/api/admin/users/${userId}/lock`, payload);
+  // Định dạng chuẩn xác theo LockUserRequestDTO của Quarkus Backend
+  const backendBody =
+    payload.duration === 'PERMANENT'
+      ? {
+          type: 'PERMANENT',
+          reason: payload.reason.trim(),
+        }
+      : {
+          type: 'TEMPORARY',
+          durationDays: Number(payload.duration),
+          reason: payload.reason.trim(),
+        };
+
+  const res = await api.patch(`/api/admin/users/${userId}/lock`, backendBody);
   return res.data;
 };
 

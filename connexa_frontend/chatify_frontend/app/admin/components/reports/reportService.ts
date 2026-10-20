@@ -34,14 +34,49 @@ export const fetchAdminReports = async (
     },
   });
 
-  const data = res.data;
+  const rawData = res.data?.data || res.data || {};
+  const rawItems: any[] = Array.isArray(rawData) ? rawData : (rawData.items || rawData.content || []);
+
+  const items: AdminReport[] = rawItems.map((r: any) => ({
+    id: String(r.id),
+    reporter: {
+      id: String(r.reporter?.id || ''),
+      username: r.reporter?.username || 'user',
+      avatarUrl: r.reporter?.avatarUrl || null,
+    },
+    targetType: r.targetType || 'POST',
+    targetId: String(r.targetId || ''),
+    targetSummary: r.targetPreview?.content || r.targetSummary || 'Nội dung bị báo cáo',
+    targetAuthor: r.targetPreview?.author
+      ? {
+          id: String(r.targetPreview.author.id || ''),
+          username: r.targetPreview.author.username || 'user',
+          avatarUrl: r.targetPreview.author.avatarUrl || null,
+        }
+      : undefined,
+    reason: (r.reason || 'OTHER') as any,
+    reasonText: r.reason || 'Vi phạm tiêu chuẩn cộng đồng',
+    details: r.details || undefined,
+    createdAt: r.createdAt || new Date().toISOString(),
+    status: r.status || 'PENDING',
+    resolvedAt: r.resolvedAt || null,
+    resolvedBy: r.resolvedBy
+      ? (typeof r.resolvedBy === 'object' ? r.resolvedBy.username || 'Admin' : String(r.resolvedBy))
+      : null,
+    actionTaken: r.actionTaken || null,
+    resolutionNote: r.resolutionNotes || r.resolutionNote || null,
+  }));
+
+  const totalElements = Number(rawData.total_elements ?? rawData.totalElements ?? items.length);
+  const totalPages = Number(rawData.total_pages ?? rawData.totalPages ?? 1);
+
   return {
-    items: data.items || data.content || [],
-    totalElements: data.totalElements ?? (data.items ? data.items.length : 0),
-    totalPages: data.totalPages ?? 1,
-    page: data.page ?? (params.page || 0),
-    size: data.size ?? (params.size || 6),
-    pendingCount: data.pendingCount ?? 0,
+    items,
+    totalElements,
+    totalPages,
+    page: Number(rawData.page ?? (params.page || 0)),
+    size: Number(rawData.size ?? (params.size || 6)),
+    pendingCount: items.filter((i) => i.status === 'PENDING').length,
     isMock: false,
   };
 };
@@ -55,8 +90,14 @@ export const resolveReportApi = async (
     return mockResolveReport(reportId, payload);
   }
 
-  const res = await api.post(`/api/admin/reports/${reportId}/resolve`, payload);
-  return res.data;
+  // Định dạng chuẩn theo ResolveReportRequestDTO của Quarkus Backend
+  const backendBody = {
+    actionTaken: payload.action,
+    resolutionNotes: payload.note || '',
+  };
+
+  const res = await api.post(`/api/admin/reports/${reportId}/resolve`, backendBody);
+  return res.data?.data || res.data;
 };
 
 export const dismissReportApi = async (
@@ -68,6 +109,11 @@ export const dismissReportApi = async (
     return mockDismissReport(reportId, payload);
   }
 
-  const res = await api.post(`/api/admin/reports/${reportId}/dismiss`, payload);
-  return res.data;
+  // Định dạng chuẩn theo DismissReportRequestDTO của Quarkus Backend
+  const backendBody = {
+    resolutionNotes: payload.note || '',
+  };
+
+  const res = await api.post(`/api/admin/reports/${reportId}/dismiss`, backendBody);
+  return res.data?.data || res.data;
 };
