@@ -15,6 +15,7 @@ import alan.nguyen.service.MessageService;
 import alan.nguyen.service.PostService;
 import alan.nguyen.service.ReportService;
 import alan.nguyen.service.UserService;
+import alan.nguyen.service.chatbot.ChatbotConfigService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -71,12 +72,23 @@ public class AdminController {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    ChatbotConfigService chatbotConfigService;
+
+    // Phục vụ backward-compatibility cho ChatWebSocket
+    private static ChatbotConfigService staticConfigService;
+
+    @Inject
+    void initStatic(ChatbotConfigService configService) {
+        staticConfigService = configService;
+    }
+
     // Biến tạm lưu trạng thái Bot (Trong thực tế nên lưu vào Database bảng `SystemConfig`)
     private static boolean isCharlesEnabled = true;
     private static long charlesTokensUsed = 15420; // Giả lập số lượng token đã dùng
 
     public static boolean isBotActive() {
-        return isCharlesEnabled;
+        return staticConfigService != null ? staticConfigService.isBotActive() : true;
     }
 
     @GET
@@ -101,8 +113,8 @@ public class AdminController {
         long pendingReports = reportRepo.count("status = ?1", ReportStatus.PENDING);
         response.put("pendingReports", pendingReports);
 
-        response.put("isBotEnabled", isCharlesEnabled);
-        response.put("botTokensUsed", charlesTokensUsed);
+        response.put("isBotEnabled", chatbotConfigService.isBotActive());
+        response.put("botTokensUsed", chatbotConfigService.getTokensUsed());
 
         // 2. Tạo dữ liệu giả lập cho biểu đồ 7 ngày (Bạn có thể Query DB group by Date thật sau)
         ArrayNode chartData = objectMapper.createArrayNode();
@@ -127,7 +139,7 @@ public class AdminController {
     @Path("/bot/toggle")
     public Response toggleBot(Map<String, Boolean> request) {
         if (request.containsKey("enabled")) {
-            isCharlesEnabled = request.get("enabled");
+            chatbotConfigService.setBotActive(request.get("enabled"));
             return Response.ok().build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
