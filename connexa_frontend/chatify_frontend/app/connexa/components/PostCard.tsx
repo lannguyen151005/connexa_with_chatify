@@ -26,7 +26,7 @@ export default function PostCard({ posts, onSelectViewDetail }: PostCardProp) {
         <div>
           {posts.map((post) => (
             <div key={post.id}>
-              <div  onClick={() => onSelectViewDetail?.(post.id)}>
+              <div onClick={() => onSelectViewDetail?.(post.id)}>
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

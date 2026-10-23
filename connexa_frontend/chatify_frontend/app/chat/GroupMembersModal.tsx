@@ -84,7 +84,7 @@ export const GroupMembersModal = ({ show, onClose, activeChatId , openAddMemberM
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content rounded-4 border-0 shadow-lg">
           <div className="modal-header p-4 border-bottom-1">
-            <h5 className="modal-title fw-bold"><i className="fas fa-users-cog me-2 text-secondary"></i>Thành viên nhóm</h5>
+            <h5 className="modal-title fw-bold"><i className="fas fa-users-cog me-2 text-secondary"></i><span className="text-gray-500">Thành viên nhóm</span></h5>
             <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
           <div className="modal-body px-4 pb-4" style={{ maxHeight: '350px', overflowY: 'auto' }}>

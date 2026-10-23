@@ -37,7 +37,7 @@ export const MessageItem = ({ content, time, isMe, avatar, attachmentUrl, isSyst
       <div style={{ maxWidth: "75%" }}> 
         
         <div 
-            className={`small p-2 ${isMe ? 'me-3 text-white bg-primary' : 'ms-3 bg-body-secondary'} mb-1 rounded-3 text-break`}
+            className={`small p-2 ${isMe ? 'me-3 text-white bg-primary' : 'ms-3 bg-body-secondary text-black'} mb-1 rounded-3 text-break`}
             style={{ whiteSpace: "pre-wrap" }}
         >
           {content}

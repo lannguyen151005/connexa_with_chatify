@@ -78,7 +78,7 @@ export const AddMemberModal = ({ show, onClose, myUserId ,activeChatId}: AddMemb
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content rounded-4 border-0 shadow-lg">
                     <div className="modal-header border-bottom-0 p-4">
-                        <h5 className="modal-title fw-bold">Thêm thành viên</h5>
+                        <h5 className="modal-title fw-bold text-black">Thêm thành viên</h5>
                         <button type="button" className="btn-close" onClick={onClose}></button>
                     </div>
                     <div className="modal-body px-4 pb-4">
@@ -100,7 +100,7 @@ export const AddMemberModal = ({ show, onClose, myUserId ,activeChatId}: AddMemb
                                     style={{ cursor: 'pointer', backgroundColor: selectedUserIds.has(user.id) ? '#e3f2fd' : 'transparent' }}
                                     onClick={() => handleSelectUser(user.id)}
                                 >
-                                    <div className="flex-grow-1 ms-2 fw-medium">{user.username}</div>
+                                    <div className="flex-grow-1 ms-2 text-black fw-medium">{user.username}</div>
                                     <div className="form-check">
                                         <input 
                                             className="form-check-input" 

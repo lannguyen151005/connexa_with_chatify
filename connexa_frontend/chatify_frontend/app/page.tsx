@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,9 +22,9 @@ export default function ConnexaHomePage() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [friendList, setFriendList] = useState<Friend[]>([]);
   const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [postList, setPostList] = useState<any[]>([]);
 
-  // Xác thực người dùng và lấy ID
   useEffect(() => {
     const token = localStorage.getItem("jwt_token");
     const userId = localStorage.getItem("user_id");
@@ -41,32 +40,36 @@ export default function ConnexaHomePage() {
       return;
     }
 
-    setMyUserId(userId);
-    setIsAuthLoading(false);
-  }, [router]);
-
-  // Lấy danh sách bạn bè
-  useEffect(() => {
-    if (isAuthLoading || !myUserId) return;
-
     let cancelled = false;
 
-    const getFriendList = async () => {
+    const loadHomeData = async () => {
       try {
-        const res = await api.get(
-          `/api/v1/friend-requests/${myUserId}`,
-          {
+        // Gọi đồng thời hai API
+        const [friendRes, userRes] = await Promise.all([
+          api.get(`/api/v1/friend-requests/${userId}`, {
             params: {
               page: 0,
               size: 10,
             },
-          }
-        );
+          }),
+          api.get(`/api/users/profile/${userId}`),
+        ]);
 
-        const items = res.data?.data?.items;
+        if (cancelled) return;
+
+        // Xử lý thông tin user
+        const user = userRes.data?.data;
+        setCurrentUser(user);
+        setMyUserId(userId);
+
+        // Xử lý danh sách bạn bè
+        const items = friendRes.data?.data?.items;
 
         if (!Array.isArray(items)) {
-          console.error("API không trả về danh sách bạn bè hợp lệ:", res.data);
+          console.error(
+            "API không trả về danh sách bạn bè hợp lệ:",
+            friendRes.data
+          );
           return;
         }
 
@@ -79,26 +82,28 @@ export default function ConnexaHomePage() {
           isOnline: item._online ?? false,
         }));
 
-        formattedData.sort((a, b) => {
-          if (a.isOnline && !b.isOnline) return -1;
-          if (!a.isOnline && b.isOnline) return 1;
-          return 0;
-        });
+        formattedData.sort(
+          (a, b) => Number(b.isOnline) - Number(a.isOnline)
+        );
 
-        if (!cancelled) {
-          setFriendList(formattedData);
-        }
+        setFriendList(formattedData);
       } catch (error) {
-        console.error("Lỗi lấy danh sách bạn bè:", error);
+        if (!cancelled) {
+          console.error("Lỗi lấy dữ liệu trang chủ:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsAuthLoading(false);
+        }
       }
     };
 
-    getFriendList();
+    loadHomeData();
 
     return () => {
       cancelled = true;
     };
-  }, [isAuthLoading, myUserId]);
+  }, [router]);
 
   if (isAuthLoading) {
     return (
@@ -109,7 +114,7 @@ export default function ConnexaHomePage() {
             role="status"
           />
           <p className="text-sm font-bold text-gray-500">
-            Đang xác thực tài khoản...
+            Đang tải dữ liệu...
           </p>
         </div>
       </div>
@@ -118,28 +123,42 @@ export default function ConnexaHomePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f6f8] text-gray-800">
-      <Header />
+      <Header
+        currentUser={currentUser}
+        onViewFriendList={() => {
+          router.push("/connexa/friends")
+        }}
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
           <div className="hidden md:col-span-3 md:block">
-            <Sidebar />
+            <Sidebar
+              currentUser={currentUser}
+            />
           </div>
 
           <div className="space-y-5 md:col-span-6">
-            <CreatePostCard />
-            <PostCard posts={postList}
+            <CreatePostCard
+              currentUser={currentUser}
+            />
+            <PostCard
+              posts={postList}
               onSelectViewDetail={(postId) => {
-                router.push(`connexa/post-detail/${postId}`)
-              }} />
+                router.push(`/connexa/post-detail/${postId}`);
+              }}
+            />
           </div>
 
           <div className="hidden space-y-5 md:col-span-3 md:block">
             <FriendWidget
               friends={friendList}
-              onSelectViewAll={(id) =>
-                router.push(`/connexa/profile/${id}`)
-              }
+              onSelectViewAll={() => {
+                router.push("/connexa/friends");
+              }}
+              onSelectViewProfile={(id) => {
+                router.push(`/connexa/profile/${id}`);
+              }}
             />
           </div>
         </div>
