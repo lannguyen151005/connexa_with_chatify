@@ -259,6 +259,7 @@ public class UserService {
             return null;
         }
 
+        result.id = targetUser.getId();
         result.username = targetUser.getUsername();
         result.avatarUrl = targetUser.getAvatar_url();
         result.note = targetUser.getNote();
