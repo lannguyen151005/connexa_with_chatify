@@ -30,6 +30,29 @@ export interface IChatbotState {
   messages: IChatMessage[];
 }
 
+export interface IChatbotHistoryItem {
+  sender: 'user' | 'bot';
+  content: string;
+}
+
+export interface IChatbotAskRequest {
+  message: string;
+  history?: IChatbotHistoryItem[];
+}
+
+export interface IChatbotAskResponseData {
+  reply: string;
+  botName: string;
+  timestamp: number;
+  tokensUsed?: number;
+}
+
+export interface IApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 /**
  * Metadata cố định của Trợ lý Charles (đồng bộ theo hệ thống Connexa/Chatify)
  */
@@ -47,25 +70,25 @@ export const BOT_METADATA = {
  */
 export const DEFAULT_QUICK_PROMPTS: IQuickPrompt[] = [
   {
-    id: 'qp_coffee',
-    icon: 'fa-classic fa-solid fa-mug-saucer',
-    label: 'Caption cafe cuối tuần',
-    promptText: 'Gợi ý cho mình 3 caption thú vị cho bài viết đi cafe thư giãn cuối tuần nhé.',
-    category: 'caption',
-  },
-  {
-    id: 'qp_travel',
-    icon: 'fa-classic fa-solid fa-plane-departure',
-    label: 'Caption du lịch sống ảo',
-    promptText: 'Gợi ý giúp mình caption hay và sâu lắng để đăng ảnh đi du lịch biển.',
-    category: 'caption',
+    id: 'qp_feed',
+    icon: 'fa-classic fa-solid fa-newspaper',
+    label: 'Cách đăng bài & ảnh',
+    promptText: 'Hướng dẫn mình cách tạo bài viết kèm ảnh và các chế độ quyền riêng tư trên Connexa.',
+    category: 'help',
   },
   {
     id: 'qp_hashtag',
     icon: 'fa-classic fa-solid fa-hashtag',
     label: 'Hashtag xu hướng',
-    promptText: 'Tạo giúp mình bộ hashtag thịnh hành cho bài viết về công nghệ và đời sống.',
+    promptText: 'Connexa hỗ trợ tìm kiếm bài viết theo hashtag và hashtag xu hướng như thế nào?',
     category: 'hashtag',
+  },
+  {
+    id: 'qp_chatify',
+    icon: 'fa-classic fa-solid fa-comments',
+    label: 'Tính năng chat Chatify',
+    promptText: 'Tính năng nhắn tin Chatify có những điểm nổi bật gì?',
+    category: 'help',
   },
   {
     id: 'qp_community_rules',

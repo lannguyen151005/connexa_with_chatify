@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { IChatMessage, BOT_METADATA } from './types';
-import { mockGenerateReply } from './chatbotMockService';
+import { askChatbot } from './chatbotService';
 import { ChatbotWindow } from './ChatbotWindow';
 
 const STORAGE_KEY_PREFIX = 'connexa_charles_chat_';
@@ -74,8 +74,8 @@ export const ChatbotWidget: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Gọi service giả lập (sau này thay bằng API thật)
-      const replyContent = await mockGenerateReply(trimmed, 900);
+      // Gọi API Quarkus Backend tích hợp Groq AI (kèm lịch sử hội thoại nhiều lượt)
+      const replyContent = await askChatbot(trimmed, messages);
 
       const botMsgId = typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
