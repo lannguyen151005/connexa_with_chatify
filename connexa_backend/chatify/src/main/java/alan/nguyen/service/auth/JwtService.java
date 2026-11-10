@@ -8,7 +8,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Response;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Singleton
@@ -35,29 +34,11 @@ public class JwtService {
                             Map.of("message", "Username or password is incorrect.")
                     )
                     .build();
-        if (existing_user.is_locked()) {
-            LocalDateTime now = LocalDateTime.now();
-            if (existing_user.getLock_until() != null) {
-                if (now.isBefore(existing_user.getLock_until())) {
-                    String reasonMsg = (existing_user.getLock_reason() != null && !existing_user.getLock_reason().isBlank())
-                            ? ". Lý do: " + existing_user.getLock_reason()
-                            : "";
-                    return Response.status(Response.Status.FORBIDDEN)
-                            .entity(Map.of("message", "Tài khoản của bạn đang bị khóa tạm thời đến " + existing_user.getLock_until() + reasonMsg))
-                            .build();
-                } else {
-                    // Hết hạn khóa tạm thời -> tự động mở khóa
-                    userService.unlockUser(existing_user.getId());
-                }
-            } else {
-                // Khóa vĩnh viễn
-                String reasonMsg = (existing_user.getLock_reason() != null && !existing_user.getLock_reason().isBlank())
-                        ? ". Lý do: " + existing_user.getLock_reason()
-                        : "";
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(Map.of("message", "Tài khoản của bạn đã bị khóa vĩnh viễn" + reasonMsg))
-                        .build();
-            }
+        String lockError = userService.evaluateLockStatusAndAutoUnlock(existing_user.getId());
+        if (lockError != null) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(Map.of("message", lockError))
+                    .build();
         }
 
         UUID myId = existing_user.getId();

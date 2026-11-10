@@ -1,6 +1,7 @@
 package alan.nguyen.controller.admin;
 
 import alan.nguyen.common.ApiResponse;
+import alan.nguyen.common.ReportSource;
 import alan.nguyen.common.ReportStatus;
 import alan.nguyen.common.ReportTargetType;
 import alan.nguyen.dto.PageResponseDTO;
@@ -112,6 +113,7 @@ public class AdminController {
         // Chỉ số Dashboard Mức 2: số đơn báo cáo đang chờ xử lý
         long pendingReports = reportRepo.count("status = ?1", ReportStatus.PENDING);
         response.put("pendingReports", pendingReports);
+        response.set("recentReports", objectMapper.valueToTree(reportService.getRecentPendingReports(5)));
 
         response.put("isBotEnabled", chatbotConfigService.isBotActive());
         response.put("botTokensUsed", chatbotConfigService.getTokensUsed());
@@ -192,10 +194,13 @@ public class AdminController {
     public Response getAdminReports(
             @QueryParam("status") ReportStatus status,
             @QueryParam("targetType") ReportTargetType targetType,
+            @QueryParam("source") ReportSource source,
+            @QueryParam("keyword") String keyword,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("10") int size
     ) {
-        PageResponseDTO<AdminReportResponseDTO> result = reportService.getAdminReports(status, targetType, page, size);
+        PageResponseDTO<AdminReportResponseDTO> result =
+                reportService.getAdminReports(status, targetType, source, keyword, page, size);
         return Response.ok(ApiResponse.success("Lấy danh sách báo cáo vi phạm thành công", result)).build();
     }
 

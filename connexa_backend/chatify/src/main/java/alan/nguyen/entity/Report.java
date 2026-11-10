@@ -1,6 +1,7 @@
 package alan.nguyen.entity;
 
 import alan.nguyen.common.ReportActionTaken;
+import alan.nguyen.common.ReportSource;
 import alan.nguyen.common.ReportStatus;
 import alan.nguyen.common.ReportTargetType;
 import jakarta.persistence.*;
@@ -23,8 +24,16 @@ public class Report {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id", nullable = false)
+    @JoinColumn(name = "reporter_id")
     private User reporter;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false)
+    @Builder.Default
+    private ReportSource source = ReportSource.USER;
+
+    @Column(name = "ai_confidence")
+    private Double aiConfidence;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false)
@@ -68,6 +77,9 @@ public class Report {
         }
         if (this.status == null) {
             this.status = ReportStatus.PENDING;
+        }
+        if (this.source == null) {
+            this.source = ReportSource.USER;
         }
     }
 }

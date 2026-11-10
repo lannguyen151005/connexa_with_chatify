@@ -1,11 +1,15 @@
 package alan.nguyen.dto.admin;
 
 import alan.nguyen.common.ReportActionTaken;
+import alan.nguyen.common.ReportSource;
 import alan.nguyen.common.ReportStatus;
 import alan.nguyen.common.ReportTargetType;
+import alan.nguyen.dto.connexa.post.PostMediaDTO;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -17,6 +21,8 @@ public class AdminReportResponseDTO {
 
     private UUID id;
     private UserSimpleDTO reporter;
+    private ReportSource source;
+    private Double aiConfidence;
     private ReportTargetType targetType;
     private UUID targetId;
     private TargetPreviewDTO targetPreview;
@@ -48,5 +54,7 @@ public class AdminReportResponseDTO {
     public static class TargetPreviewDTO {
         private String content;
         private UserSimpleDTO author;
+        @Builder.Default
+        private List<PostMediaDTO> mediaList = Collections.emptyList();
     }
 }

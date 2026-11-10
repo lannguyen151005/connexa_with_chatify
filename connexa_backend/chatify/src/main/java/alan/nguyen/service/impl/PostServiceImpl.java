@@ -14,15 +14,18 @@ import alan.nguyen.entity.User;
 import alan.nguyen.repository.PostRepo;
 import alan.nguyen.repository.UserRepo;
 import alan.nguyen.service.PostService;
+import alan.nguyen.service.moderation.PostSubmittedForModerationEvent;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -36,6 +39,9 @@ public class PostServiceImpl implements PostService {
 
     @Inject
     alan.nguyen.service.HashtagService hashtagService;
+
+    @Inject
+    Event<PostSubmittedForModerationEvent> moderationEvent;
 
     @Override
     @Transactional
@@ -71,6 +77,16 @@ public class PostServiceImpl implements PostService {
         // Tự động trích xuất và đồng bộ hashtags
         hashtagService.syncPostHashtags(post, post.getContent());
         List<String> tags = hashtagService.getHashtagNamesByPostId(post.getId());
+
+        moderationEvent.fire(new PostSubmittedForModerationEvent(
+                post.getId(),
+                author.getId(),
+                author.getRole(),
+                post.getPrivacy(),
+                post.getContent(),
+                tags,
+                false
+        ));
 
         return PostResponseDTO.fromEntity(post, tags);
     }
@@ -166,7 +182,11 @@ public class PostServiceImpl implements PostService {
             throw new ForbiddenException("Bạn không có quyền chỉnh sửa bài viết của người khác");
         }
 
-        post.setContent(dto.getContent().trim());
+        String previousContent = post.getContent();
+        PostPrivacy previousPrivacy = post.getPrivacy();
+        String trimmedContent = dto.getContent().trim();
+
+        post.setContent(trimmedContent);
         if (dto.getPrivacy() != null) {
             post.setPrivacy(dto.getPrivacy());
         }
@@ -175,6 +195,20 @@ public class PostServiceImpl implements PostService {
         // Cập nhật lại hashtags khi nội dung bài viết thay đổi
         hashtagService.syncPostHashtags(post, post.getContent());
         List<String> tags = hashtagService.getHashtagNamesByPostId(post.getId());
+
+        boolean contentChanged = !Objects.equals(previousContent, trimmedContent);
+        boolean openedFromPrivate = previousPrivacy == PostPrivacy.PRIVATE && post.getPrivacy() != PostPrivacy.PRIVATE;
+        if (contentChanged || openedFromPrivate) {
+            moderationEvent.fire(new PostSubmittedForModerationEvent(
+                    post.getId(),
+                    post.getAuthor().getId(),
+                    post.getAuthor().getRole(),
+                    post.getPrivacy(),
+                    post.getContent(),
+                    tags,
+                    true
+            ));
+        }
 
         return PostResponseDTO.fromEntity(post, tags);
     }

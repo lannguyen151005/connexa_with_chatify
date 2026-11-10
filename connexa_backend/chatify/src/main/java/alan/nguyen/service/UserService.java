@@ -250,6 +250,36 @@ public class UserService {
         return Response.ok(Map.of("message", "Mở khóa tài khoản thành công")).build();
     }
 
+    /**
+     * Kiểm tra trạng thái khóa của tài khoản; tự động mở khóa nếu án phạt tạm thời đã hết hạn.
+     *
+     * @return thông báo lỗi khóa nếu tài khoản vẫn đang bị khóa, hoặc null nếu tài khoản hợp lệ.
+     */
+    @Transactional
+    public String evaluateLockStatusAndAutoUnlock(UUID userId) {
+        User user = userRepo.findById(userId);
+        if (user == null || !user.is_locked()) {
+            return null;
+        }
+
+        String reasonMsg = (user.getLock_reason() != null && !user.getLock_reason().isBlank())
+                ? ". Lý do: " + user.getLock_reason()
+                : "";
+
+        if (user.getLock_until() != null) {
+            if (LocalDateTime.now().isBefore(user.getLock_until())) {
+                return "Tài khoản của bạn đang bị khóa tạm thời đến " + user.getLock_until() + reasonMsg;
+            }
+            user.set_locked(false);
+            user.setLock_until(null);
+            user.setLock_reason(null);
+            userRepo.persist(user);
+            return null;
+        }
+
+        return "Tài khoản của bạn đã bị khóa vĩnh viễn" + reasonMsg;
+    }
+
     public ProfileDetailDTO getProfileDetail(UUID id) {
 
         ProfileDetailDTO result = new ProfileDetailDTO();

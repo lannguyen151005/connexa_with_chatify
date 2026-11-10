@@ -36,6 +36,9 @@ public class Notification {
     @Column(name = "comment_id")
     private UUID comment_id;
 
+    @Column(name = "message", columnDefinition = "TEXT")
+    private String message;
+
     @Column(name = "is_read")
     private boolean is_read;
 
