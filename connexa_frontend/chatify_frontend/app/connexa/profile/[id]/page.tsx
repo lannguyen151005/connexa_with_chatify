@@ -311,7 +311,7 @@ export default function UserProfilePage() {
             {totalFriends > 5 && (
               <div className="w-full rounded-2xl border mt-2 shadow-sm border border-gray-100">
                 <p className="text-center text-gray-500 mt-3">Và hơn nữa...</p>
-                </div>
+              </div>
             )}
           </div>
         </section>
@@ -325,6 +325,8 @@ export default function UserProfilePage() {
           <div className="box-border w-full min-w-0 rounded-2xl border border-gray-100 bg-white px-4 py-8 text-center text-sm text-gray-400 shadow-sm sm:px-6 sm:py-10 sm:text-base">
             <PostCard
               posts={userPosts}
+              currentUserId={currentUserId}
+              currentUser={currentUser}
               onSelectViewDetail={(postId) => {
                 router.push(`/connexa/post-detail/${postId}`);
               }}

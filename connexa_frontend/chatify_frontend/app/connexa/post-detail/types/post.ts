@@ -31,7 +31,10 @@ export interface ReactionUser {
 export interface PostMedia {
   id: string;
   media_url: string;
+  media_type: "IMAGE" | "VIDEO";
+  display_order?: number;
 }
+
 
 export interface PostInfo {
   id: string;
