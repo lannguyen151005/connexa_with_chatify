@@ -121,7 +121,7 @@ export const ChatWindow = ({
               style={{ width: "45px", height: "45px", objectFit: "cover" }}
             />
             <div className='px-2'>
-              <h5 className="mb-0 fw-bold">{activeChat.name}</h5>
+              <h5 className="mb-0 fw-bold text-black">{activeChat.name}</h5>
             {onlineCount && onlineCount > 0 ? (
               <small className="text-success fw-bold d-flex align-items-center">
                 <span className="bg-success rounded-circle me-1" style={{ width: "8px", height: "8px", display: "inline-block" }}></span>

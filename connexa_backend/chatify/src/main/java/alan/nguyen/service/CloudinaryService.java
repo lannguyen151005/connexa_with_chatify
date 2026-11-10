@@ -1,3 +1,4 @@
+
 package alan.nguyen.service;
 
 import com.cloudinary.Cloudinary;
@@ -12,15 +13,23 @@ import java.util.Map;
 @ApplicationScoped
 public class CloudinaryService {
 
-    private Cloudinary cloudinary;
-    public CloudinaryService(@ConfigProperty(name = "app.cloudinary.url") String cloudinary_url){
-        this.cloudinary = new Cloudinary(cloudinary_url);
+    private final Cloudinary cloudinary;
+
+    public CloudinaryService(
+            @ConfigProperty(name = "app.cloudinary.url")
+            String cloudinaryUrl
+    ) {
+        this.cloudinary = new Cloudinary(cloudinaryUrl);
     }
 
     public String uploadFile(File file) throws IOException {
-        Map uploadResult = cloudinary.uploader().upload(file, ObjectUtils.emptyMap());
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(
+                file,
+                ObjectUtils.asMap(
+                        "resource_type", "auto"
+                )
+        );
 
-        //return image's link
         return uploadResult.get("secure_url").toString();
     }
 }

@@ -91,7 +91,7 @@ export const UpdateGroupModal = ({ show, onClose, activeChat }: UpdateGroupModal
         <div className="modal-content rounded-4 border-0 shadow-lg">
           <div className="modal-header border-bottom-0 p-4 pb-0">
             <h5 className="modal-title fw-bold">
-              <i className="fas fa-sliders-h text-primary me-2"></i>Tùy chỉnh nhóm
+              <i className="fas fa-sliders-h text-primary me-2"></i><span className='text-gray-500'>Tùy chỉnh nhóm</span>
             </h5>
             <button type="button" className="btn-close" onClick={onClose}></button>
           </div>

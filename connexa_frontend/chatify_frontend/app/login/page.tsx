@@ -41,7 +41,11 @@ export default function LoginPage() {
         toast.success("Đăng nhập thành công!");
 
         // Chuyển hướng sang trang Chat
-        router.push('/');
+        if(decoded.groups && decoded.groups.includes('ADMIN')) {
+          router.push('/admin');
+        }else{
+          router.push('/');
+        }
       } else {
         // GỌI API ĐĂNG KÝ
         const res = await api.post('/api/auth/register', formDataRegister);

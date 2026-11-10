@@ -5,26 +5,38 @@ import type {
   PostComment,
   ReactionType,
 } from "../types/post";
+
 import ReactionPicker from "./ReactionPicker";
 
 interface Props {
   comment: PostComment;
   replies: PostComment[];
   childrenByParent: Map<string, PostComment[]>;
+  currentUserId: string | null;
+  postAuthorId: string;
   onReply: (comment: PostComment) => void;
   onReact: (
     commentId: string,
     type: ReactionType | null
   ) => void;
+  onDelete: (commentId: string) => void;
 }
 
 export default function CommentItem({
   comment,
   replies,
   childrenByParent,
+  currentUserId,
+  postAuthorId,
   onReply,
   onReact,
+  onDelete,
 }: Props) {
+  const canDelete =
+    !!currentUserId &&
+    (currentUserId === comment.authorId ||
+      currentUserId === postAuthorId);
+
   return (
     <div className="min-w-0">
       <div className="flex items-start gap-2.5">
@@ -42,6 +54,7 @@ export default function CommentItem({
             <p className="text-sm font-bold text-gray-800">
               {comment.authorUsername || "Người dùng"}
             </p>
+
             <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-700">
               {comment.content}
             </p>
@@ -65,12 +78,32 @@ export default function CommentItem({
             <ReactionPicker
               compact
               value={comment.myReaction ?? null}
-              onChange={(type) => onReact(comment.id, type)}
+              onChange={(type) =>
+                onReact(comment.id, type)
+              }
             />
 
             <span className="text-xs text-gray-400">
               {comment.reactionCount ?? 0}
             </span>
+
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Bạn có chắc chắn muốn xóa bình luận này và các phản hồi?"
+                    )
+                  ) {
+                    onDelete(comment.id);
+                  }
+                }}
+                className="text-xs font-semibold text-red-500 hover:text-red-700"
+              >
+                Xóa
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -81,10 +114,15 @@ export default function CommentItem({
             <CommentItem
               key={reply.id}
               comment={reply}
-              replies={childrenByParent.get(reply.id) ?? []}
+              replies={
+                childrenByParent.get(reply.id) ?? []
+              }
               childrenByParent={childrenByParent}
+              currentUserId={currentUserId}
+              postAuthorId={postAuthorId}
               onReply={onReply}
               onReact={onReact}
+              onDelete={onDelete}
             />
           ))}
         </div>

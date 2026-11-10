@@ -2,10 +2,13 @@ package alan.nguyen.repository;
 
 import alan.nguyen.dto.chatify.user.ProfileResponseDTO;
 import alan.nguyen.entity.User;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.Response;
 
+import java.util.Map;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -22,4 +25,19 @@ public class UserRepo implements PanacheRepositoryBase<User, UUID> {
         return Response.ok(profile).build();
     }
 
+    public PanacheQuery<User> searchUsers(
+            String keyword,
+            UUID currentUserId,
+            Page page
+    ) {
+        return find("""
+            lower(username) like lower(:keyword)
+            and id <> :currentUserId
+            """,
+                Map.of(
+                        "keyword", "%" + keyword.trim() + "%",
+                        "currentUserId", currentUserId
+                )
+        ).page(page);
+    }
 }

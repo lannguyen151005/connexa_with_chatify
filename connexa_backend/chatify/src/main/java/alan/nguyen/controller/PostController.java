@@ -85,6 +85,30 @@ public class PostController {
     }
 
     /**
+     * Khám phá bài viết công khai từ người lạ
+     */
+    @GET
+    @Path("/discover")
+    public Response getNewPosts(
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size
+    ) {
+        UUID currentUserId = UUID.fromString(jwt.getSubject());
+
+        PageResponseDTO<PostResponseDTO> result =
+                postService.getNewPosts(currentUserId, page, size);
+
+        return Response.ok(
+                ApiResponse.success(
+                        "Lấy danh sách bài viết khám phá thành công",
+                        result
+                )
+        ).build();
+    }
+
+
+
+    /**
      * Cập nhật nội dung hoặc quyền riêng tư của bài viết (Chỉ tác giả)
      */
     @PUT
@@ -109,5 +133,22 @@ public class PostController {
         postService.deletePost(currentUserId, id);
         return Response.ok(ApiResponse.success("Đã xóa bài viết thành công", null))
                 .build();
+    }
+
+    @GET
+    @Path("/trending")
+    public Response getTrendingPosts(
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size
+    ) {
+        PageResponseDTO<PostResponseDTO> result =
+                postService.getTrendingPosts(page, size);
+
+        return Response.ok(
+                ApiResponse.success(
+                        "Lấy danh sách bài viết trending thành công",
+                        result
+                )
+        ).build();
     }
 }

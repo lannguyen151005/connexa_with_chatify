@@ -125,6 +125,37 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public PageResponseDTO<PostResponseDTO> getNewPosts(
+            UUID currentUserId,
+            int page,
+            int size
+    ) {
+        int pageIndex = Math.max(0, page);
+        int pageSize = Math.min(Math.max(1, size), 50);
+
+        Page pageable = Page.of(pageIndex, pageSize);
+
+        PanacheQuery<Post> query =
+                postRepo.findDiscoverPosts(currentUserId, pageable);
+
+        List<PostResponseDTO> items = query.list()
+                .stream()
+                .map(p -> PostResponseDTO.fromEntity(
+                        p,
+                        hashtagService.getHashtagNamesByPostId(p.getId())
+                ))
+                .toList();
+
+        return PageResponseDTO.of(
+                items,
+                query.page().index,
+                query.page().size,
+                query.count(),
+                query.pageCount()
+        );
+    }
+
+    @Override
     @Transactional
     public PostResponseDTO updatePost(UUID currentUserId, UUID postId, UpdatePostRequestDTO dto) {
         Post post = postRepo.findActiveByIdWithDetails(postId)
@@ -199,5 +230,37 @@ public class PostServiceImpl implements PostService {
 
         return PageResponseDTO.of(items, query.page().index, query.page().size, query.count(), query.pageCount());
     }
+
+    @Override
+    public PageResponseDTO<PostResponseDTO> getTrendingPosts(
+            int page,
+            int size
+    ) {
+        int pageIndex = Math.max(0, page);
+        int pageSize = Math.min(Math.max(1, size), 50);
+
+        Page pageable = Page.of(pageIndex, pageSize);
+
+        PanacheQuery<Post> query =
+                postRepo.findTrendingPosts(pageable);
+
+        List<PostResponseDTO> items = query.list()
+                .stream()
+                .map(p -> PostResponseDTO.fromEntity(
+                        p,
+                        hashtagService.getHashtagNamesByPostId(p.getId())
+                ))
+                .toList();
+
+        return PageResponseDTO.of(
+                items,
+                query.page().index,
+                query.page().size,
+                query.count(),
+                query.pageCount()
+        );
+    }
+
+
 }
 
