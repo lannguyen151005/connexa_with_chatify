@@ -48,5 +48,10 @@ public interface PostService {
      * Lấy danh sách bài viết dành cho Admin quản lý/kiểm duyệt
      */
     PageResponseDTO<PostResponseDTO> getAdminPosts(int page, int size);
+
+
+    PageResponseDTO<PostResponseDTO> getNewPosts(UUID currentUserId, int page, int size);
+
+    PageResponseDTO<PostResponseDTO> getTrendingPosts(int page, int size);
 }
 

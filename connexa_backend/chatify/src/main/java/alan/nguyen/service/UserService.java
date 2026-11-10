@@ -117,7 +117,8 @@ public class UserService {
     // Update user'status
     @Transactional
     public void updateUserStatus(UUID userId, boolean isOnline) {
-
+        User user = userRepo.findById(userId);
+        user.set_online(isOnline);
     }
 
     @Transactional

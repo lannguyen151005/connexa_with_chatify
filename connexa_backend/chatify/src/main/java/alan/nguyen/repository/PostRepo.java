@@ -51,41 +51,52 @@ public class PostRepo implements PanacheRepositoryBase<Post, UUID> {
      * - PRIVATE: chỉ chính tác giả xem được.
      * - FRIENDS_ONLY: tác giả và bạn bè đã ACCEPTED xem được.
      */
+
+
     public PanacheQuery<Post> findFeed(
             UUID currentUserId,
-            Page page) {
+            Page page
+    ) {
         return find("""
-                select p
-                from Post p
-                where p.isDeleted = false
-                  and (
-                      p.privacy = :publicPrivacy
-                      or p.author.id = :currentUserId
-                      or (
-                          p.privacy = :friendsPrivacy
-                          and exists (
-                              select 1
-                              from Friendship f
-                              where f.status = :acceptedStatus
-                                and (
-                                    (f.sender.id = :currentUserId
-                                     and f.receiver.id = p.author.id)
-                                    or
-                                    (f.receiver.id = :currentUserId
-                                     and f.sender.id = p.author.id)
+            select p
+            from Post p
+            where p.isDeleted = false
+              and (
+                  p.author.id = :currentUserId
+                  or (
+                      p.privacy in (:publicPrivacy, :friendsPrivacy)
+                      and exists (
+                          select 1
+                          from Friendship f
+                          where f.status = :acceptedStatus
+                            and (
+                                (
+                                    f.sender.id = :currentUserId
+                                    and f.receiver.id = p.author.id
                                 )
-                          )
+                                or
+                                (
+                                    f.receiver.id = :currentUserId
+                                    and f.sender.id = p.author.id
+                                )
+                            )
                       )
                   )
-                order by p.isPinned desc, p.createdAt desc, p.id desc
-                """,
+              )
+            order by p.isPinned desc,
+                     p.createdAt desc,
+                     p.id desc
+            """,
                 Map.of(
+                        "currentUserId", currentUserId,
                         "publicPrivacy", PostPrivacy.PUBLIC,
                         "friendsPrivacy", PostPrivacy.FRIENDS_ONLY,
-                        "acceptedStatus", FriendRequestStatus.ACCEPTED,
-                        "currentUserId", currentUserId))
-                .page(page);
+                        "acceptedStatus", FriendRequestStatus.ACCEPTED
+                )
+        ).page(page);
     }
+
+
 
     /**
      * Lấy bài viết trên dòng thời gian cá nhân có phân trang.
@@ -149,53 +160,51 @@ public class PostRepo implements PanacheRepositoryBase<Post, UUID> {
             UUID currentUserId,
             String keyword,
             Page page) {
+
         if (keyword == null || keyword.isBlank()) {
             return find("1 = 0").page(page);
         }
 
         String normalizedKeyword = keyword.trim();
 
-        if (normalizedKeyword.isBlank()) {
-            return find("1 = 0").page(page);
-        }
-
         String query = """
-                select p
-                from Post p
-                left join fetch p.author
-                where p.isDeleted = false
-                  and lower(p.content) like lower(:keyword) escape '\\\\'
-                  and (
-                      p.privacy = :publicPrivacy
-                      or p.author.id = :currentUserId
-                      or (
-                          p.privacy = :friendsPrivacy
-                          and exists (
-                              select 1
-                              from Friendship f
-                              where f.status = :acceptedStatus
-                                and (
-                                    (f.sender.id = :currentUserId
-                                     and f.receiver.id = p.author.id)
-                                    or
-                                    (f.receiver.id = :currentUserId
-                                     and f.sender.id = p.author.id)
-                                )
-                          )
+            select p
+            from Post p
+            left join fetch p.author
+            where p.isDeleted = false
+              and lower(p.content) like lower(:keyword)
+              and (
+                  p.privacy = :publicPrivacy
+                  or p.author.id = :currentUserId
+                  or (
+                      p.privacy = :friendsPrivacy
+                      and exists (
+                          select 1
+                          from Friendship f
+                          where f.status = :acceptedStatus
+                            and (
+                                (f.sender.id = :currentUserId
+                                 and f.receiver.id = p.author.id)
+                                or
+                                (f.receiver.id = :currentUserId
+                                 and f.sender.id = p.author.id)
+                            )
                       )
                   )
-                order by p.createdAt desc, p.id desc
-                """;
+              )
+            order by p.createdAt desc, p.id desc
+            """;
 
         return find(
                 query,
                 Map.of(
-                        "keyword", "%" + SqlUtils.escapeLike(normalizedKeyword) + "%",
+                        "keyword", "%" + normalizedKeyword.toLowerCase(Locale.ROOT) + "%",
                         "currentUserId", currentUserId,
                         "publicPrivacy", PostPrivacy.PUBLIC,
                         "friendsPrivacy", PostPrivacy.FRIENDS_ONLY,
-                        "acceptedStatus", FriendRequestStatus.ACCEPTED))
-                .page(page);
+                        "acceptedStatus", FriendRequestStatus.ACCEPTED
+                )
+        ).page(page);
     }
 
     /**
@@ -280,4 +289,64 @@ public class PostRepo implements PanacheRepositoryBase<Post, UUID> {
                 order by p.isPinned desc, p.createdAt desc, p.id desc
                 """).page(page);
     }
-}
+
+    /**
+     * Khám phá bài viết của người lạ.
+     *
+     * Điều kiện:
+     * - Bài viết chưa bị xóa.
+     * - Privacy = PUBLIC.
+     * - Không lấy bài viết của chính mình.
+     * - Không lấy bài viết của bạn bè đã ACCEPTED.
+     */
+    public PanacheQuery<Post> findDiscoverPosts(
+            UUID currentUserId,
+            Page page
+    ) {
+        return find("""
+            select p
+            from Post p
+            left join fetch p.author
+            where p.isDeleted = false
+              and p.privacy = :publicPrivacy
+              and p.author.id <> :currentUserId
+              and not exists (
+                  select 1
+                  from Friendship f
+                  where f.status = :acceptedStatus
+                    and (
+                        (f.sender.id = :currentUserId
+                         and f.receiver.id = p.author.id)
+                        or
+                        (f.receiver.id = :currentUserId
+                         and f.sender.id = p.author.id)
+                    )
+              )
+            order by p.createdAt desc, p.id desc
+            """,
+                Map.of(
+                        "currentUserId", currentUserId,
+                        "publicPrivacy", PostPrivacy.PUBLIC,
+                        "acceptedStatus", FriendRequestStatus.ACCEPTED
+                )
+        ).page(page);
+    }
+
+    public PanacheQuery<Post> findTrendingPosts(Page page) {
+        return find("""
+            select p
+            from Post p
+            left join fetch p.author
+            where p.isDeleted = false
+              and p.privacy = :publicPrivacy
+            order by
+                (p.like_count + p.comment_count) desc,
+                p.createdAt desc,
+                p.id desc
+            """,
+                Map.of(
+                        "publicPrivacy", PostPrivacy.PUBLIC
+                )
+        ).page(page);
+    }
+}
