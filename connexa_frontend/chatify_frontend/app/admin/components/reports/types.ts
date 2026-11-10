@@ -2,6 +2,8 @@ export type ReportTargetType = 'POST' | 'COMMENT' | 'USER';
 
 export type ReportStatus = 'PENDING' | 'RESOLVED' | 'DISMISSED';
 
+export type ReportSource = 'USER' | 'AI_MODERATION';
+
 export type ReportReason = 
   | 'SPAM'
   | 'SCAM'
@@ -13,6 +15,7 @@ export type ReportReason =
 
 export type ReportActionTaken = 
   | 'REMOVE_CONTENT'
+  | 'LOCK_USER'
   | 'WARN_USER'
   | 'DISMISSED'
   | 'NO_ACTION';
@@ -23,12 +26,22 @@ export interface ReportUserSummary {
   avatarUrl: string | null;
 }
 
+export interface ReportMediaItem {
+  id?: string;
+  media_url: string;
+  media_type: 'IMAGE' | 'VIDEO' | string;
+  display_order?: number;
+}
+
 export interface AdminReport {
   id: string;
-  reporter: ReportUserSummary;
+  reporter: ReportUserSummary | null;
+  source: ReportSource;
+  aiConfidence?: number | null;
   targetType: ReportTargetType;
   targetId: string;
   targetSummary: string;
+  targetMedia?: ReportMediaItem[];
   targetAuthor?: ReportUserSummary;
   reason: ReportReason;
   reasonText: string;
@@ -56,11 +69,12 @@ export interface ReportFilterParams {
   size?: number;
   status?: ReportStatus | 'ALL';
   targetType?: ReportTargetType | 'ALL';
+  source?: ReportSource | 'ALL';
   keyword?: string;
 }
 
 export interface ResolveReportPayload {
-  action: 'REMOVE_CONTENT' | 'WARN_USER';
+  action: 'REMOVE_CONTENT' | 'WARN_USER' | 'LOCK_USER';
   note?: string;
 }
 

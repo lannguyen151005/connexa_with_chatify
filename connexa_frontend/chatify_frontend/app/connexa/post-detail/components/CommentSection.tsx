@@ -16,8 +16,8 @@ interface Props {
     username: string;
     avatarUrl: string | null;
   };
-  currentUserId: string | null;
-  postAuthorId: string;
+  currentUserId?: string | null;
+  postAuthorId?: string;
   onAddComment: (
     content: string,
     parentId: string | null
@@ -26,17 +26,19 @@ interface Props {
     commentId: string,
     type: ReactionType | null
   ) => void;
-  onDeleteComment: (commentId: string) => void;
+  onDeleteComment?: (commentId: string) => void;
+  onReportComment?: (comment: PostComment) => void;
 }
 
 export default function CommentSection({
   comments,
   currentUser,
-  currentUserId,
-  postAuthorId,
+  currentUserId = null,
+  postAuthorId = "",
   onAddComment,
   onReactComment,
   onDeleteComment,
+  onReportComment,
 }: Props) {
   const [content, setContent] = useState("");
   const [replyTo, setReplyTo] =
@@ -198,6 +200,7 @@ export default function CommentSection({
               }}
               onReact={onReactComment}
               onDelete={onDeleteComment}
+              onReport={onReportComment}
             />
           ))}
         </div>

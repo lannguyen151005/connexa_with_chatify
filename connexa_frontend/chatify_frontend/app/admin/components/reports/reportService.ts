@@ -16,6 +16,18 @@ export const isReportsMockEnabled = (): boolean => {
   return process.env.NEXT_PUBLIC_ADMIN_REPORTS_MOCK === 'true';
 };
 
+export const fetchPendingReportsCount = async (): Promise<number> => {
+  if (isReportsMockEnabled()) {
+    return getMockPaginatedReports({ status: 'PENDING', page: 0, size: 1 }).pendingCount;
+  }
+
+  const res = await api.get('/api/admin/reports', {
+    params: { status: 'PENDING', page: 0, size: 1 },
+  });
+  const rawData = res.data?.data || res.data || {};
+  return Number(rawData.total_elements ?? rawData.totalElements ?? 0);
+};
+
 export const fetchAdminReports = async (
   params: ReportFilterParams = {}
 ): Promise<PaginatedReportsResponse> => {
@@ -24,29 +36,46 @@ export const fetchAdminReports = async (
     return getMockPaginatedReports(params);
   }
 
-  const res = await api.get('/api/admin/reports', {
-    params: {
-      page: params.page ?? 0,
-      size: params.size ?? 6,
-      status: params.status && params.status !== 'ALL' ? params.status : undefined,
-      targetType: params.targetType && params.targetType !== 'ALL' ? params.targetType : undefined,
-      keyword: params.keyword || undefined,
-    },
-  });
+  const hasExactPendingQuery =
+    params.status === 'PENDING' &&
+    (!params.targetType || params.targetType === 'ALL') &&
+    (!params.source || params.source === 'ALL') &&
+    !params.keyword?.trim();
+
+  const [res, globalPendingCount] = await Promise.all([
+    api.get('/api/admin/reports', {
+      params: {
+        page: params.page ?? 0,
+        size: params.size ?? 6,
+        status: params.status && params.status !== 'ALL' ? params.status : undefined,
+        targetType: params.targetType && params.targetType !== 'ALL' ? params.targetType : undefined,
+        source: params.source && params.source !== 'ALL' ? params.source : undefined,
+        keyword: params.keyword?.trim() || undefined,
+      },
+    }),
+    hasExactPendingQuery
+      ? Promise.resolve<number | null>(null)
+      : fetchPendingReportsCount().catch(() => null),
+  ]);
 
   const rawData = res.data?.data || res.data || {};
   const rawItems: any[] = Array.isArray(rawData) ? rawData : (rawData.items || rawData.content || []);
 
   const items: AdminReport[] = rawItems.map((r: any) => ({
     id: String(r.id),
-    reporter: {
-      id: String(r.reporter?.id || ''),
-      username: r.reporter?.username || 'user',
-      avatarUrl: r.reporter?.avatarUrl || null,
-    },
+    reporter: r.reporter
+      ? {
+          id: String(r.reporter.id || ''),
+          username: r.reporter.username || 'user',
+          avatarUrl: r.reporter.avatarUrl || null,
+        }
+      : null,
+    source: r.source === 'AI_MODERATION' ? 'AI_MODERATION' : 'USER',
+    aiConfidence: typeof r.aiConfidence === 'number' ? r.aiConfidence : null,
     targetType: r.targetType || 'POST',
     targetId: String(r.targetId || ''),
     targetSummary: r.targetPreview?.content || r.targetSummary || 'Nội dung bị báo cáo',
+    targetMedia: Array.isArray(r.targetPreview?.mediaList) ? r.targetPreview.mediaList : [],
     targetAuthor: r.targetPreview?.author
       ? {
           id: String(r.targetPreview.author.id || ''),
@@ -76,7 +105,9 @@ export const fetchAdminReports = async (
     totalPages,
     page: Number(rawData.page ?? (params.page || 0)),
     size: Number(rawData.size ?? (params.size || 6)),
-    pendingCount: items.filter((i) => i.status === 'PENDING').length,
+    pendingCount: hasExactPendingQuery
+      ? totalElements
+      : (globalPendingCount ?? items.filter((i) => i.status === 'PENDING').length),
     isMock: false,
   };
 };

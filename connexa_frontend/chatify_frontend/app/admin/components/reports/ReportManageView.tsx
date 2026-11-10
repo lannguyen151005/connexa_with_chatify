@@ -29,6 +29,7 @@ export default function ReportManageView({ onPendingCountChange }: ReportManageV
     size: 6,
     status: 'PENDING',
     targetType: 'ALL',
+    source: 'ALL',
     keyword: '',
   });
 
@@ -65,21 +66,30 @@ export default function ReportManageView({ onPendingCountChange }: ReportManageV
     }));
   };
 
-  // Hành động: Giải quyết vi phạm (Gỡ nội dung hoặc Cảnh cáo)
+  // Hành động: Giải quyết vi phạm (Gỡ nội dung, Cảnh cáo hoặc Khóa tài khoản)
   const handleResolve = async (
     report: AdminReport,
-    action: 'REMOVE_CONTENT' | 'WARN_USER',
+    action: 'REMOVE_CONTENT' | 'WARN_USER' | 'LOCK_USER',
     note: string
   ) => {
     const actionLabel =
-      action === 'REMOVE_CONTENT' ? 'Gỡ nội dung vi phạm (Xóa mềm)' : 'Gửi cảnh cáo đến tài khoản';
+      action === 'REMOVE_CONTENT'
+        ? 'Gỡ nội dung vi phạm (Xóa mềm)'
+        : action === 'LOCK_USER'
+        ? 'Khóa tạm thời tài khoản vi phạm (7 ngày)'
+        : 'Gửi cảnh cáo đến tài khoản';
 
     const result = await Swal.fire({
       title: 'Xác nhận xử lý vi phạm?',
       text: `Áp dụng biện pháp: "${actionLabel}" cho vụ việc #${report.id}.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: action === 'REMOVE_CONTENT' ? '#e11d48' : '#f59e0b',
+      confirmButtonColor:
+        action === 'REMOVE_CONTENT'
+          ? '#e11d48'
+          : action === 'LOCK_USER'
+          ? '#0f172a'
+          : '#f59e0b',
       cancelButtonColor: '#64748b',
       confirmButtonText: 'Đồng ý thi hành',
       cancelButtonText: 'Hủy',
@@ -98,8 +108,11 @@ export default function ReportManageView({ onPendingCountChange }: ReportManageV
           setSelectedReport(null);
           loadReports();
         }
-      } catch (error) {
-        toast.error("Lỗi khi gửi quyết định xử lý báo cáo!");
+      } catch (error: unknown) {
+        const apiError = error as { response?: { data?: { message?: string } } };
+        toast.error(
+          apiError?.response?.data?.message || 'Lỗi khi gửi quyết định xử lý báo cáo!'
+        );
       }
     }
   };
@@ -252,7 +265,7 @@ export default function ReportManageView({ onPendingCountChange }: ReportManageV
             Không tìm thấy lá đơn khiếu nại nào theo bộ lọc hoặc từ khóa hiện tại.
           </p>
           <button
-            onClick={() => handleFilterChange({ keyword: '', status: 'ALL', targetType: 'ALL', page: 0 })}
+            onClick={() => handleFilterChange({ keyword: '', status: 'ALL', targetType: 'ALL', source: 'ALL', page: 0 })}
             className="px-4 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full transition-all cursor-pointer"
           >
             Xem tất cả báo cáo

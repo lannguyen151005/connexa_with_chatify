@@ -11,6 +11,7 @@ import Sidebar from './components/Sidebar';
 import AdminHeader from './components/AdminHeader';
 import PostManageView from './components/posts/PostManageView';
 import ReportManageView from './components/reports/ReportManageView';
+import { fetchPendingReportsCount } from './components/reports/reportService';
 import AiSettingsView from './components/ai-settings/AiSettingsView';
 import { AdminMenuTab, AdminProfile } from './types';
 
@@ -24,7 +25,7 @@ export default function AdminWorkspace() {
   });
   const [isAuth, setIsAuth] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [pendingReportsCount, setPendingReportsCount] = useState(3);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
 
   useEffect(() => {
     // Chế độ phát triển giao diện: bypass kiểm tra Auth nếu bật cờ trong .env.local
@@ -60,6 +61,13 @@ export default function AdminWorkspace() {
       router.push('/login');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!isAuth) return;
+    fetchPendingReportsCount()
+      .then((count) => setPendingReportsCount(count))
+      .catch(() => {});
+  }, [isAuth]);
 
   const handleLogout = () => {
     localStorage.removeItem('jwt_token');

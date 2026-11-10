@@ -45,7 +45,11 @@ export default function ReportTable({ reports, onInspect }: ReportTableProps) {
         return (
           <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
             <i className="fas fa-check text-[10px] text-emerald-600"></i>
-            {report.actionTaken === 'REMOVE_CONTENT' ? 'Đã gỡ bài' : 'Đã cảnh cáo'}
+            {report.actionTaken === 'REMOVE_CONTENT'
+              ? 'Đã gỡ nội dung'
+              : report.actionTaken === 'LOCK_USER'
+              ? 'Đã khóa TK'
+              : 'Đã cảnh cáo'}
           </span>
         );
       case 'DISMISSED':
@@ -64,7 +68,7 @@ export default function ReportTable({ reports, onInspect }: ReportTableProps) {
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-              <th className="py-3.5 px-4 w-[200px]">Người tố cáo</th>
+              <th className="py-3.5 px-4 w-[200px]">Nguồn / Người báo cáo</th>
               <th className="py-3.5 px-4">Đối tượng & Bằng chứng vi phạm</th>
               <th className="py-3.5 px-4 w-[170px]">Lý do vi phạm</th>
               <th className="py-3.5 px-4 w-[150px] text-center">Trạng thái</th>
@@ -77,29 +81,55 @@ export default function ReportTable({ reports, onInspect }: ReportTableProps) {
                 key={report.id}
                 className="hover:bg-slate-50/70 transition-colors group"
               >
-                {/* 1. NGƯỜI TỐ CÁO */}
+                {/* 1. NGƯỜI TỐ CÁO / NGUỒN PHÁT HIỆN */}
                 <td className="py-3.5 px-4 align-top">
-                  <div className="flex items-start gap-2.5">
-                    <img
-                      src={
-                        report.reporter.avatarUrl ||
-                        "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp"
-                      }
-                      alt={report.reporter.username}
-                      className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200 mt-0.5"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <span className="font-bold text-slate-800 truncate block">
-                        @{report.reporter.username}
-                      </span>
-                      <span className="text-[11px] text-slate-400 block truncate mt-0.5">
-                        {new Date(report.createdAt).toLocaleDateString('vi-VN')}
-                      </span>
-                      <span className="text-[9px] font-mono text-slate-400 block mt-0.5">
-                        #{report.id}
-                      </span>
+                  {report.source === 'AI_MODERATION' || !report.reporter ? (
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shrink-0 mt-0.5">
+                        <i className="fas fa-robot text-xs"></i>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-indigo-700 text-xs">
+                            AI Kiểm duyệt
+                          </span>
+                          {typeof report.aiConfidence === 'number' && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700">
+                              {Math.round(report.aiConfidence * 100)}%
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400 block truncate mt-0.5">
+                          {new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-400 block mt-0.5">
+                          #{report.id}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex items-start gap-2.5">
+                      <img
+                        src={
+                          report.reporter.avatarUrl ||
+                          "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp"
+                        }
+                        alt={report.reporter.username}
+                        className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200 mt-0.5"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-slate-800 truncate block">
+                          @{report.reporter.username}
+                        </span>
+                        <span className="text-[11px] text-slate-400 block truncate mt-0.5">
+                          {new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-400 block mt-0.5">
+                          #{report.id}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </td>
 
                 {/* 2. ĐỐI TƯỢNG & BẰNG CHỨNG */}

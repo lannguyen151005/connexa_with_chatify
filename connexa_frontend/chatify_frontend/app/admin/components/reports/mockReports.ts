@@ -4,11 +4,9 @@ import { mockSoftDeletePost } from '../posts/mockPosts';
 export let MOCK_REPORTS_DATABASE: AdminReport[] = [
   {
     id: "rep-001",
-    reporter: {
-      id: "usr-02",
-      username: "thao_nguyen",
-      avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava4-bg.webp",
-    },
+    reporter: null,
+    source: "AI_MODERATION",
+    aiConfidence: 0.94,
     targetType: "POST",
     targetId: "post-103",
     targetSummary: "💥 CƠ HỘI ĐẦU TƯ LỢI NHUẬN 300% MỖI NGÀY! Inbox ngay số Zalo 0988xxxxxx...",
@@ -17,9 +15,9 @@ export let MOCK_REPORTS_DATABASE: AdminReport[] = [
       username: "tai_khoan_spam",
       avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava1-bg.webp",
     },
-    reason: "SPAM",
-    reasonText: "Spam / Quảng cáo lừa đảo",
-    details: "Tài khoản này liên tục đăng bài rủ rê nạp tiền đầu tư vào nhóm Zalo lừa đảo tài chính.",
+    reason: "SCAM",
+    reasonText: "SCAM",
+    details: "AI phát hiện nội dung kêu gọi đầu tư lợi nhuận bất thường có dấu hiệu lừa đảo tài chính.",
     createdAt: "2026-10-18T08:15:00Z",
     status: "PENDING",
   },
@@ -30,6 +28,7 @@ export let MOCK_REPORTS_DATABASE: AdminReport[] = [
       username: "hoang_minh_tech",
       avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp",
     },
+    source: "USER",
     targetType: "POST",
     targetId: "post-105",
     targetSummary: "Thanh lý vé concert Blackpink giá sốc chỉ 500k/vé, chuyển khoản trước giữ chỗ ngay...",
@@ -51,6 +50,7 @@ export let MOCK_REPORTS_DATABASE: AdminReport[] = [
       username: "lan_anh_design",
       avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava5-bg.webp",
     },
+    source: "USER",
     targetType: "COMMENT",
     targetId: "cmt-501",
     targetSummary: "Nội dung bình luận: 'Làm giao diện nhìn như rác rưởi, đúng là thứ bất tài vô dụng...'",
@@ -72,6 +72,7 @@ export let MOCK_REPORTS_DATABASE: AdminReport[] = [
       username: "quoc_tuan",
       avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp",
     },
+    source: "USER",
     targetType: "USER",
     targetId: "usr-08",
     targetSummary: "Tài khoản @tai_khoan_gay_roi thường xuyên gửi tin nhắn đe dọa thành viên nhóm",
@@ -97,6 +98,7 @@ export let MOCK_REPORTS_DATABASE: AdminReport[] = [
       username: "thao_nguyen",
       avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava4-bg.webp",
     },
+    source: "USER",
     targetType: "POST",
     targetId: "post-099",
     targetSummary: "Bài viết chia sẻ video game bạo lực 18+ không che",
@@ -122,6 +124,7 @@ export let MOCK_REPORTS_DATABASE: AdminReport[] = [
       username: "tai_khoan_spam",
       avatarUrl: "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava1-bg.webp",
     },
+    source: "USER",
     targetType: "POST",
     targetId: "post-101",
     targetSummary: "📢 THÔNG BÁO HỆ THỐNG: Mạng xã hội Connexa chính thức nâng cấp tính năng...",
@@ -147,6 +150,7 @@ export function getMockPaginatedReports(params: ReportFilterParams): PaginatedRe
   const size = params.size ?? 6;
   const status = params.status || 'PENDING'; // Mặc định mở tab Chờ xử lý
   const targetType = params.targetType || 'ALL';
+  const source = params.source || 'ALL';
   const keyword = (params.keyword || '').trim().toLowerCase();
 
   let filtered = [...MOCK_REPORTS_DATABASE];
@@ -161,12 +165,17 @@ export function getMockPaginatedReports(params: ReportFilterParams): PaginatedRe
     filtered = filtered.filter((r) => r.targetType === targetType);
   }
 
+  // Lọc theo nguồn phát hiện
+  if (source !== 'ALL') {
+    filtered = filtered.filter((r) => r.source === source);
+  }
+
   // Lọc theo từ khóa (tên người báo cáo, người bị báo cáo, trích dẫn vi phạm, mã đơn)
   if (keyword) {
     filtered = filtered.filter(
       (r) =>
         r.id.toLowerCase().includes(keyword) ||
-        r.reporter.username.toLowerCase().includes(keyword) ||
+        (r.reporter && r.reporter.username.toLowerCase().includes(keyword)) ||
         (r.targetAuthor && r.targetAuthor.username.toLowerCase().includes(keyword)) ||
         r.targetSummary.toLowerCase().includes(keyword) ||
         r.reasonText.toLowerCase().includes(keyword)
@@ -201,7 +210,13 @@ export function mockResolveReport(
   target.actionTaken = payload.action;
   target.resolvedAt = new Date().toISOString();
   target.resolvedBy = 'admin_dev';
-  target.resolutionNote = payload.note || (payload.action === 'REMOVE_CONTENT' ? 'Đã gỡ nội dung vi phạm.' : 'Đã gửi cảnh cáo đến người dùng.');
+  target.resolutionNote =
+    payload.note ||
+    (payload.action === 'REMOVE_CONTENT'
+      ? 'Đã gỡ nội dung vi phạm.'
+      : payload.action === 'LOCK_USER'
+      ? 'Đã khóa tài khoản vi phạm 7 ngày.'
+      : 'Đã gửi cảnh cáo đến người dùng.');
 
   // Đồng bộ dữ liệu sang Module Bài viết: Nếu gỡ nội dung bài viết, tự động xóa mềm bài viết trong mock posts!
   if (payload.action === 'REMOVE_CONTENT' && target.targetType === 'POST') {

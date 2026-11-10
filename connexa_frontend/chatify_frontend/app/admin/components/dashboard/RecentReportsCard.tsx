@@ -82,21 +82,41 @@ export default function RecentReportsCard({
               Hiện không có báo cáo vi phạm nào đang chờ xử lý.
             </div>
           ) : (
-            reports.slice(0, 3).map((rep) => (
+            reports.slice(0, 3).map((rep) => {
+              const isAi = rep.source === 'AI_MODERATION';
+              const parsedDate = new Date(rep.createdAt);
+              const formattedCreatedAt = Number.isNaN(parsedDate.getTime())
+                ? rep.createdAt
+                : parsedDate.toLocaleString('vi-VN');
+
+              return (
               <div key={rep.id} className="py-3 flex items-start gap-3 first:pt-2 last:pb-1">
-                <img
-                  src={rep.reporterAvatar || "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp"}
-                  alt={rep.reporterName}
-                  className="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-slate-200 mt-0.5"
-                />
+                {isAi ? (
+                  <div className="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shrink-0 mt-0.5">
+                    <i className="fas fa-robot text-sm"></i>
+                  </div>
+                ) : (
+                  <img
+                    src={rep.reporterAvatar || "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp"}
+                    alt={rep.reporterName}
+                    className="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-slate-200 mt-0.5"
+                  />
+                )}
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-xs font-bold text-slate-800 truncate">
-                      @{rep.reporterName}
-                    </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`text-xs font-bold truncate ${isAi ? 'text-indigo-700' : 'text-slate-800'}`}>
+                        {isAi ? rep.reporterName : `@${rep.reporterName}`}
+                      </span>
+                      {isAi && typeof rep.aiConfidence === 'number' && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 shrink-0">
+                          {Math.round(rep.aiConfidence * 100)}%
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[11px] text-slate-400 shrink-0">
-                      {rep.createdAt}
+                      {formattedCreatedAt}
                     </span>
                   </div>
 
@@ -112,7 +132,8 @@ export default function RecentReportsCard({
                   </p>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

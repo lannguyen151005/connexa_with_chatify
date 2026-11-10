@@ -8,6 +8,8 @@ import toast from "react-hot-toast";
 import PostContent from "@/app/connexa/post-detail/components/PostContent";
 import ReactionSummary from "@/app/connexa/post-detail/components/ReactionSummary";
 import CommentSection from "@/app/connexa/post-detail/components/CommentSection";
+import ReportModal from "@/app/connexa/components/ReportModal";
+import type { UserReportTargetType } from "@/app/connexa/services/ReportService";
 
 import type {
   PostInfo,
@@ -77,6 +79,12 @@ export default function PostCard({
   const [commentCounts, setCommentCounts] = useState<
     Record<string, number>
   >({});
+
+  const [reportTarget, setReportTarget] = useState<{
+    targetType: UserReportTargetType;
+    targetId: string;
+    previewText: string;
+  } | null>(null);
 
   const getState = (postId: string) =>
     interactionMap[postId] ?? createInitialState();
@@ -477,6 +485,14 @@ export default function PostCard({
                   onReact={(type) =>
                     handlePostReaction(post.id, type)
                   }
+                  currentUserId={currentUserId}
+                  onReportPost={(targetPost) =>
+                    setReportTarget({
+                      targetType: "POST",
+                      targetId: targetPost.id,
+                      previewText: targetPost.content,
+                    })
+                  }
                   onToggleComments={() =>
                     handleToggleComments(post.id)
                   }
@@ -533,6 +549,13 @@ export default function PostCard({
                           commentId
                         )
                       }
+                      onReportComment={(comment) =>
+                        setReportTarget({
+                          targetType: "COMMENT",
+                          targetId: comment.id,
+                          previewText: comment.content,
+                        })
+                      }
                     />
                   )}
                 </div>
@@ -540,6 +563,16 @@ export default function PostCard({
             </article>
           );
         })
+      )}
+
+      {reportTarget && (
+        <ReportModal
+          isOpen={true}
+          targetType={reportTarget.targetType}
+          targetId={reportTarget.targetId}
+          previewText={reportTarget.previewText}
+          onClose={() => setReportTarget(null)}
+        />
       )}
     </div>
   );

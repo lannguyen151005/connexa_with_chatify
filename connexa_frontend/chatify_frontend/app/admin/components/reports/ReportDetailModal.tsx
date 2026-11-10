@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import { AdminReport, ReportActionTaken } from './types';
+import { AdminReport } from './types';
 
 interface ReportDetailModalProps {
   report: AdminReport | null;
   onClose: () => void;
-  onResolve: (report: AdminReport, action: 'REMOVE_CONTENT' | 'WARN_USER', note: string) => void;
+  onResolve: (report: AdminReport, action: 'REMOVE_CONTENT' | 'WARN_USER' | 'LOCK_USER', note: string) => void;
   onDismiss: (report: AdminReport, note: string) => void;
 }
 
@@ -44,7 +44,7 @@ export default function ReportDetailModal({
     }
   };
 
-  const handleResolveAction = async (action: 'REMOVE_CONTENT' | 'WARN_USER') => {
+  const handleResolveAction = async (action: 'REMOVE_CONTENT' | 'WARN_USER' | 'LOCK_USER') => {
     setIsSubmitting(true);
     await onResolve(report, action, resolutionNote);
     setIsSubmitting(false);
@@ -85,29 +85,54 @@ export default function ReportDetailModal({
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
           {/* Reporter & Violator Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {/* Người báo cáo */}
+            {/* Người báo cáo / AI */}
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                Người gửi khiếu nại:
+                {report.source === 'AI_MODERATION' || !report.reporter
+                  ? 'Nguồn phát hiện tự động:'
+                  : 'Người gửi khiếu nại:'}
               </span>
-              <div className="flex items-center gap-2.5">
-                <img
-                  src={
-                    report.reporter.avatarUrl ||
-                    "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp"
-                  }
-                  alt={report.reporter.username}
-                  className="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200"
-                />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800">
-                    @{report.reporter.username}
-                  </h4>
-                  <span className="text-[10px] text-slate-400">
-                    Gửi: {new Date(report.createdAt).toLocaleString('vi-VN')}
-                  </span>
+              {report.source === 'AI_MODERATION' || !report.reporter ? (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center ring-1 ring-indigo-200 shrink-0">
+                    <i className="fas fa-robot text-sm"></i>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-indigo-700">
+                        AI Kiểm duyệt
+                      </h4>
+                      {typeof report.aiConfidence === 'number' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                          Độ tin cậy {Math.round(report.aiConfidence * 100)}%
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400">
+                      Quét lúc: {new Date(report.createdAt).toLocaleString('vi-VN')}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={
+                      report.reporter.avatarUrl ||
+                      "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava2-bg.webp"
+                    }
+                    alt={report.reporter.username}
+                    className="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200"
+                  />
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">
+                      @{report.reporter.username}
+                    </h4>
+                    <span className="text-[10px] text-slate-400">
+                      Gửi: {new Date(report.createdAt).toLocaleString('vi-VN')}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Đối tượng bị tố cáo */}
@@ -137,17 +162,44 @@ export default function ReportDetailModal({
           </div>
 
           {/* Violated Content Evidence */}
-          <div className="p-4 bg-white rounded-2xl border border-slate-200 space-y-2">
+          <div className="p-4 bg-white rounded-2xl border border-slate-200 space-y-3">
             <span className="text-xs font-bold text-slate-700 flex items-center gap-2">
               <i className="fas fa-quote-left text-blue-500"></i>
               Bằng chứng nội dung bị tố cáo:
             </span>
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-800 italic leading-relaxed">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-800 italic leading-relaxed whitespace-pre-wrap break-words">
               "{report.targetSummary}"
             </div>
+            {report.targetMedia && report.targetMedia.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                {report.targetMedia.map((media, index) => (
+                  <div
+                    key={media.id || index}
+                    className="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video"
+                  >
+                    {String(media.media_type).toUpperCase() === 'VIDEO' ? (
+                      <video
+                        src={media.media_url}
+                        controls
+                        className="w-full h-full object-cover bg-black"
+                      />
+                    ) : (
+                      <img
+                        src={media.media_url}
+                        alt={`Media ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             {report.details && (
-              <p className="text-xs text-slate-500 pt-1">
-                <strong>Ghi chú của người gửi:</strong> {report.details}
+              <p className="text-xs text-slate-600 pt-1 whitespace-pre-wrap">
+                <strong>
+                  {report.source === 'AI_MODERATION' ? 'Phân tích của AI:' : 'Ghi chú của người gửi:'}
+                </strong>{' '}
+                {report.details}
               </p>
             )}
           </div>
@@ -172,6 +224,7 @@ export default function ReportDetailModal({
                 <strong>Biện pháp:</strong>{' '}
                 {report.actionTaken === 'REMOVE_CONTENT' && 'Đã gỡ bỏ nội dung vi phạm (Xóa mềm).'}
                 {report.actionTaken === 'WARN_USER' && 'Đã gửi cảnh cáo trực tiếp đến tài khoản.'}
+                {report.actionTaken === 'LOCK_USER' && 'Đã khóa tài khoản vi phạm (7 ngày).'}
                 {report.actionTaken === 'DISMISSED' && 'Không áp dụng biện pháp (Báo cáo sai).'}
               </p>
               {report.resolutionNote && (
@@ -223,7 +276,19 @@ export default function ReportDetailModal({
                 <span>Cảnh cáo tài khoản</span>
               </button>
 
-              {/* Option 3: Dismiss report */}
+              {/* Option 3: Lock user 7 days */}
+              {report.targetAuthor && (
+                <button
+                  disabled={isSubmitting}
+                  onClick={() => handleResolveAction('LOCK_USER')}
+                  className="px-4 py-2 rounded-full text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white transition-all cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <i className="fas fa-user-lock text-[11px]"></i>
+                  <span>Khóa TK (7 ngày)</span>
+                </button>
+              )}
+
+              {/* Option 4: Dismiss report */}
               <button
                 disabled={isSubmitting}
                 onClick={handleDismissAction}

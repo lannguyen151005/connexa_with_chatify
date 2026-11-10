@@ -19,7 +19,8 @@ interface Props {
     commentId: string,
     type: ReactionType | null
   ) => void;
-  onDelete: (commentId: string) => void;
+  onDelete?: (commentId: string) => void;
+  onReport?: (comment: PostComment) => void;
 }
 
 export default function CommentItem({
@@ -31,11 +32,17 @@ export default function CommentItem({
   onReply,
   onReact,
   onDelete,
+  onReport,
 }: Props) {
   const canDelete =
+    !!onDelete &&
     !!currentUserId &&
     (currentUserId === comment.authorId ||
       currentUserId === postAuthorId);
+  const canReport =
+    !!onReport &&
+    !!currentUserId &&
+    currentUserId !== comment.authorId;
 
   return (
     <div className="min-w-0">
@@ -96,12 +103,22 @@ export default function CommentItem({
                       "Bạn có chắc chắn muốn xóa bình luận này và các phản hồi?"
                     )
                   ) {
-                    onDelete(comment.id);
+                    onDelete?.(comment.id);
                   }
                 }}
                 className="text-xs font-semibold text-red-500 hover:text-red-700"
               >
                 Xóa
+              </button>
+            )}
+
+            {canReport && (
+              <button
+                type="button"
+                onClick={() => onReport(comment)}
+                className="text-xs font-semibold text-gray-400 hover:text-rose-600"
+              >
+                Báo cáo
               </button>
             )}
           </div>
@@ -123,6 +140,7 @@ export default function CommentItem({
               onReply={onReply}
               onReact={onReact}
               onDelete={onDelete}
+              onReport={onReport}
             />
           ))}
         </div>

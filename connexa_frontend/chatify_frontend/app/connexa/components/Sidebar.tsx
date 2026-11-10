@@ -1,5 +1,8 @@
 
+"use client";
+
 import React from "react";
+import { useRouter } from "next/navigation";
 
 type FeedMode = "feed" | "discover" | "trending";
 
@@ -28,32 +31,45 @@ const menuItems = [
 
 interface SidebarProps {
   currentUser: any;
-  activeTab: FeedMode;
-  onHomeClick: () => void;
-  onDiscoverClick: () => void;
-  onTrendingClick: () => void;
+  activeTab?: FeedMode | null;
+  onHomeClick?: () => void;
+  onDiscoverClick?: () => void;
+  onTrendingClick?: () => void;
 }
 
 export default function Sidebar({
   currentUser,
-  activeTab,
+  activeTab = null,
   onDiscoverClick,
   onHomeClick,
   onTrendingClick,
 }: SidebarProps) {
+  const router = useRouter();
 
   const handleMenuClick = (tab: FeedMode | null) => {
     switch (tab) {
       case "feed":
-        onHomeClick();
+        if (onHomeClick) {
+          onHomeClick();
+        } else {
+          router.push("/");
+        }
         break;
 
       case "discover":
-        onDiscoverClick();
+        if (onDiscoverClick) {
+          onDiscoverClick();
+        } else {
+          router.push("/");
+        }
         break;
 
       case "trending":
-        onTrendingClick();
+        if (onTrendingClick) {
+          onTrendingClick();
+        } else {
+          router.push("/");
+        }
         break;
 
       default:

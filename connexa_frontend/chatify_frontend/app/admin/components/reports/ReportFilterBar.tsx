@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ReportFilterParams, ReportStatus, ReportTargetType } from './types';
+import { ReportFilterParams, ReportSource, ReportStatus, ReportTargetType } from './types';
 
 interface ReportFilterBarProps {
   filterParams: ReportFilterParams;
@@ -31,6 +31,7 @@ export default function ReportFilterBar({
 
   const currentStatus = filterParams.status || 'PENDING';
   const currentTargetType = filterParams.targetType || 'ALL';
+  const currentSource = filterParams.source || 'ALL';
 
   const statusTabClass = (status: ReportStatus | 'ALL') => {
     const isSelected = currentStatus === status;
@@ -46,6 +47,15 @@ export default function ReportFilterBar({
     return `px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
       isSelected
         ? 'bg-slate-800 text-white shadow-2xs'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+    }`;
+  };
+
+  const sourceClass = (source: ReportSource | 'ALL') => {
+    const isSelected = currentSource === source;
+    return `px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer inline-flex items-center gap-1 ${
+      isSelected
+        ? 'bg-indigo-600 text-white shadow-2xs'
         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
     }`;
   };
@@ -125,38 +135,66 @@ export default function ReportFilterBar({
         </button>
       </div>
 
-      {/* Row 2: Target Type Filter */}
-      <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100 text-xs">
-        <span className="text-[11px] font-bold text-slate-400 mr-1 uppercase tracking-wider">
-          Loại vi phạm:
-        </span>
-        <button
-          onClick={() => onFilterChange({ targetType: 'ALL', page: 0 })}
-          className={targetTypeClass('ALL')}
-        >
-          Tất cả
-        </button>
-        <button
-          onClick={() => onFilterChange({ targetType: 'POST', page: 0 })}
-          className={targetTypeClass('POST')}
-        >
-          <i className="fas fa-newspaper mr-1 text-[10px]"></i>
-          Bài viết
-        </button>
-        <button
-          onClick={() => onFilterChange({ targetType: 'COMMENT', page: 0 })}
-          className={targetTypeClass('COMMENT')}
-        >
-          <i className="fas fa-comment mr-1 text-[10px]"></i>
-          Bình luận
-        </button>
-        <button
-          onClick={() => onFilterChange({ targetType: 'USER', page: 0 })}
-          className={targetTypeClass('USER')}
-        >
-          <i className="fas fa-user mr-1 text-[10px]"></i>
-          Tài khoản
-        </button>
+      {/* Row 2: Target Type & Source Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-bold text-slate-400 mr-1 uppercase tracking-wider">
+            Loại vi phạm:
+          </span>
+          <button
+            onClick={() => onFilterChange({ targetType: 'ALL', page: 0 })}
+            className={targetTypeClass('ALL')}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => onFilterChange({ targetType: 'POST', page: 0 })}
+            className={targetTypeClass('POST')}
+          >
+            <i className="fas fa-newspaper mr-1 text-[10px]"></i>
+            Bài viết
+          </button>
+          <button
+            onClick={() => onFilterChange({ targetType: 'COMMENT', page: 0 })}
+            className={targetTypeClass('COMMENT')}
+          >
+            <i className="fas fa-comment mr-1 text-[10px]"></i>
+            Bình luận
+          </button>
+          <button
+            onClick={() => onFilterChange({ targetType: 'USER', page: 0 })}
+            className={targetTypeClass('USER')}
+          >
+            <i className="fas fa-user mr-1 text-[10px]"></i>
+            Tài khoản
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-bold text-slate-400 mr-1 uppercase tracking-wider">
+            Nguồn:
+          </span>
+          <button
+            onClick={() => onFilterChange({ source: 'ALL', page: 0 })}
+            className={sourceClass('ALL')}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => onFilterChange({ source: 'USER', page: 0 })}
+            className={sourceClass('USER')}
+          >
+            <i className="fas fa-user-check text-[10px]"></i>
+            Người dùng
+          </button>
+          <button
+            onClick={() => onFilterChange({ source: 'AI_MODERATION', page: 0 })}
+            className={sourceClass('AI_MODERATION')}
+          >
+            <i className="fas fa-robot text-[10px]"></i>
+            AI phát hiện
+          </button>
+        </div>
       </div>
     </div>
   );

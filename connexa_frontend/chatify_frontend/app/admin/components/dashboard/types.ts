@@ -28,6 +28,8 @@ export interface RecentReportItem {
   id: string;
   reporterName: string;
   reporterAvatar?: string;
+  source?: 'USER' | 'AI_MODERATION';
+  aiConfidence?: number | null;
   targetType: 'POST' | 'COMMENT' | 'USER';
   targetSummary: string;
   reason: string;

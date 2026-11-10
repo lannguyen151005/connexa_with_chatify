@@ -6,6 +6,8 @@ import api from "@/app/utils/api";
 import PostContent from "../components/PostContent";
 import ReactionSummary from "../components/ReactionSummary";
 import CommentSection from "../components/CommentSection";
+import ReportModal from "../../components/ReportModal";
+import type { UserReportTargetType } from "../../services/ReportService";
 import { PostComment, PostInfo, ReactionType, ReactionUser } from "../types/post";
 import toast from "react-hot-toast";
 import { createComment, deleteComment, reactToPost } from "../services/PostInteractionService";
@@ -36,6 +38,11 @@ export default function PostDetailPage() {
     const [postComments, setPostComments] =
         useState<PostComment[]>([]);
     const [authChecked, setAuthChecked] = useState(false);
+    const [reportTarget, setReportTarget] = useState<{
+        targetType: UserReportTargetType;
+        targetId: string;
+        previewText: string;
+    } | null>(null);
     const postId = params.id;
 
     const [currentUser] = useState({
@@ -320,6 +327,15 @@ export default function PostDetailPage() {
                                 myReaction={myPostReaction}
                                 reactionCount={totalReactions}
                                 onReact={handlePostReaction}
+                                currentUserId={currentUserId}
+                                commentCount={postComments.length || postInfo.comment_count || 0}
+                                onReportPost={(targetPost) =>
+                                    setReportTarget({
+                                        targetType: "POST",
+                                        targetId: targetPost.id,
+                                        previewText: targetPost.content,
+                                    })
+                                }
                             />
 
                             <ReactionSummary reactions={postReactions} />
@@ -328,9 +344,29 @@ export default function PostDetailPage() {
                                 postId={postId}
                                 comments={postComments}
                                 currentUser={currentUser}
+                                currentUserId={currentUserId}
+                                postAuthorId={postInfo.author?.id ?? ""}
                                 onAddComment={handleAddComment}
                                 onReactComment={handleCommentReaction}
+                                onDeleteComment={handleDeleteComment}
+                                onReportComment={(comment) =>
+                                    setReportTarget({
+                                        targetType: "COMMENT",
+                                        targetId: comment.id,
+                                        previewText: comment.content,
+                                    })
+                                }
                             />
+
+                            {reportTarget && (
+                                <ReportModal
+                                    isOpen={true}
+                                    targetType={reportTarget.targetType}
+                                    targetId={reportTarget.targetId}
+                                    previewText={reportTarget.previewText}
+                                    onClose={() => setReportTarget(null)}
+                                />
+                            )}
                         </>
                     )}
 

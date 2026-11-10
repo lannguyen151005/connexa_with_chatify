@@ -21,7 +21,7 @@ export default function Sidebar({
   onLogout,
   isOpen,
   closeSidebar,
-  pendingReportsCount = 3,
+  pendingReportsCount = 0,
 }: SidebarProps) {
   const router = useRouter();
 
